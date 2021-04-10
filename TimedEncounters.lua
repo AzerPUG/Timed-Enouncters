@@ -15,7 +15,7 @@ local EcounterTrackingEditBoxes = {}
 
 local tempFrame
 
-function TimedEncounters:OnLoad()
+function AZP.TimedEncounters:OnLoad()
     TEMainFrame = CreateFrame("FRAME", nil, UIParent, "BackdropTemplate")
     TEMainFrame:SetSize(400, 300)
     TEMainFrame:SetPoint("CENTER", -750, 0)
@@ -23,7 +23,7 @@ function TimedEncounters:OnLoad()
     TEMainFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
     TEMainFrame:RegisterEvent("ENCOUNTER_START")
     TEMainFrame:RegisterEvent("ENCOUNTER_END")
-    TEMainFrame:SetScript("OnEvent", TimedEncounters.OnEvent)
+    TEMainFrame:SetScript("OnEvent", AZP.TimedEncounters.OnEvent)
     TEMainFrame:SetBackdrop({
         bgFile = "Interface/Tooltips/UI-Tooltip-Background",
         edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
@@ -52,7 +52,7 @@ function TimedEncounters:OnLoad()
     tempFrame:RegisterForDrag("LeftButton")
     tempFrame:SetScript("OnDragStart", tempFrame.StartMoving)
     tempFrame:SetScript("OnDragStop", tempFrame.StopMovingOrSizing)
-    tempFrame:SetScript("OnEvent", TimedEncounters.OnEvent)
+    tempFrame:SetScript("OnEvent", AZP.TimedEncounters.OnEvent)
     tempFrame:SetBackdrop({
         bgFile = "Interface/Tooltips/UI-Tooltip-Background",
         edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
@@ -105,11 +105,11 @@ function TimedEncounters:OnLoad()
     TEUpdateFrameCloseButton:SetScript("OnClick", function() TEUpdateFrame:Hide() end )
 
     TEOptionsPanel = CreateFrame("FRAME", nil)
-    TEOptionsPanel.name = "TimedEncounters"
+    TEOptionsPanel.name = "Timed Encounters"
     InterfaceOptions_AddCategory(TEOptionsPanel)
 
     local OptionsPanelTitle = TEOptionsPanel:CreateFontString(nil, "ARTWORK", "GameFontNormalHuge")
-    OptionsPanelTitle:SetText("TimedEncounters Options Panel")
+    OptionsPanelTitle:SetText("Timed Encounters Options Panel")
     OptionsPanelTitle:SetWidth(TEOptionsPanel:GetWidth())
     OptionsPanelTitle:SetHeight(25)
     OptionsPanelTitle:SetPoint("TOP", 0, -10)
@@ -132,13 +132,13 @@ function TimedEncounters:OnLoad()
         --counterFrame.editbox:SetScript("OnEditFocusLost", function() EncounterTrackingData[i][1] = tonumber(EcounterTrackingEditBoxes[i].editbox:GetText()) end)
 
         EcounterTrackingEditBoxes[i] = counterFrame
-        counterFrame.editbox:SetScript("OnEditFocusLost", function() TimedEncounters:PullNumbersFromEditBox(i) end)
+        counterFrame.editbox:SetScript("OnEditFocusLost", function() AZP.TimedEncounters:PullNumbersFromEditBox(i) end)
     end
 
-    TimedEncounters:ShareVersion()
+    AZP.TimedEncounters:ShareVersion()
 end
 
-function TimedEncounters:PullNumbersFromEditBox(index)
+function AZP.TimedEncounters:PullNumbersFromEditBox(index)
     EncounterTrackingData[index][1] = tonumber(EcounterTrackingEditBoxes[index].editbox:GetText(), 10)
 end
 
@@ -157,26 +157,26 @@ function DelayedExecution(delayTime, delayedFunction)
     frame:Show()
 end
 
-function TimedEncounters:TrackTime()
+function AZP.TimedEncounters:TrackTime()
     for i = 1, #EncounterTrackingData do
         if EncounterTrackingData[i][1] == nil then
             break
         else
             print(EncounterTrackingData[i][1])
-            C_Timer.After(EncounterTrackingData[i][1], function() TimedEncounters:TrackHealth(i) end)
+            C_Timer.After(EncounterTrackingData[i][1], function() AZP.TimedEncounters:TrackHealth(i) end)
         end
     end
 end
 
-function TimedEncounters:TrackHealth(i)
+function AZP.TimedEncounters:TrackHealth(i)
     local bossMaxHealth = UnitHealthMax("boss1")
     local bossCurrentHealth = UnitHealth("boss1")
     local bossPercentHealth = math.floor(bossCurrentHealth/bossMaxHealth*10000)/100
     EncounterTrackingData[i][2] = bossPercentHealth
-    TimedEncounters:DisplayResults()
+    AZP.TimedEncounters:DisplayResults()
 end
 
-function TimedEncounters:DisplayResults()
+function AZP.TimedEncounters:DisplayResults()
     local setText = "Tracked Data:\n"
     TEMainFrame.text:SetText(setText)
     for i = 1, #EncounterTrackingData do
@@ -189,7 +189,7 @@ function TimedEncounters:DisplayResults()
     TEMainFrame.text:SetText(setText)
 end
 
-function TimedEncounters:ShareVersion()
+function AZP.TimedEncounters:ShareVersion()
     DelayedExecution(10, function()
         if IsInRaid() then
             C_ChatInfo.SendAddonMessage("AZPTT_VERSION", TEVersion ,"RAID", 1)
@@ -203,7 +203,7 @@ function TimedEncounters:ShareVersion()
     end)
 end
 
-function TimedEncounters:ReceiveVersion(version)
+function AZP.TimedEncounters:ReceiveVersion(version)
     if version > TEVersion then
         if (not HaveShowedUpdateNotification) then
             HaveShowedUpdateNotification = true
@@ -217,20 +217,20 @@ function TimedEncounters:ReceiveVersion(version)
     end
 end
 
-function TimedEncounters:OnEvent(event, ...)
+function AZP.TimedEncounters:OnEvent(event, ...)
     if event == "CHAT_MSG_ADDON" then
         local prefix, payload, _, sender = ...
         if prefix == "AZPTT_VERSION" then
-            --TimedEncounters:ReceiveVersion(tonumber(payload))
+            --AZP.TimedEncounters:ReceiveVersion(tonumber(payload))
         end
     elseif event == "GROUP_ROSTER_UPDATE" then
-        TimedEncounters:ShareVersion()
+        AZP.TimedEncounters:ShareVersion()
     elseif event == "ENCOUNTER_START" then
-        TimedEncounters:TrackTime()
+        AZP.TimedEncounters:TrackTime()
     elseif event == "ENCOUNTER_END" then
-        TimedEncounters:DisplayResults()
+        AZP.TimedEncounters:DisplayResults()
         TEMainFrame:Show()
     end
 end
 
-TimedEncounters:OnLoad()
+AZP.TimedEncounters:OnLoad()
