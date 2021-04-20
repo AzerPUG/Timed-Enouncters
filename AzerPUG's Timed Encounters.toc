@@ -4,5 +4,6 @@
 ## OptionalDeps: AzerPUG's Core
 ## Notes: TimedEncounters makes you able to set timers/health% and check during the fight if you make those checkpoints.
 ## Version: SL 9.0.5 (For actual addon version, check TimedEncounters.lua)
+## SavedVariables: AZPTESavedList AZPTELocation
 
 TimedEncounters.lua
