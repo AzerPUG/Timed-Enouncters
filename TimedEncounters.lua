@@ -351,7 +351,7 @@ function AZP.TimedEncounters:PullNumbersFromEditBox(index)
     AZP.TimedEncounters:PlaceMarkers()
 end
 
-function DelayedExecution(delayTime, delayedFunction)
+function AZP.TimedEncounters:DelayedExecution(delayTime, delayedFunction)
     local frame = CreateFrame("Frame")
     frame.start_time = GetServerTime()
     frame:SetScript("OnUpdate",
@@ -425,7 +425,7 @@ end
 
 function AZP.TimedEncounters:ShareVersion()
     local versionString = string.format("|TT:%d|", AZP.VersionControl.TimedEncounters)
-    DelayedExecution(10, function()
+    AZP.TimedEncounters:DelayedExecution(10, function()
         if IsInGroup() then
             if IsInRaid() then
                 C_ChatInfo.SendAddonMessage("AZPVERSIONS", versionString ,"RAID", 1)
