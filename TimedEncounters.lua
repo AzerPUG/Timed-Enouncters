@@ -1,7 +1,9 @@
 -- TODO
-    -- Draggable
-    -- Remember location
-    -- Remember Hide/Show
+    -- Remember location CombatFrame
+    -- Remember Hide/Show TEFrame
+    -- Remember Hide/Show CombatFrame
+    -- Add TimeDifference on  HP% Reached.
+        -- Need extra tracking function for HP based on listed %.
 
 if AZP == nil then AZP = {} end
 if AZP.VersionControl == nil then AZP.VersionControl = {} end
