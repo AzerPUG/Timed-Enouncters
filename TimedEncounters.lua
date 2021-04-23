@@ -23,6 +23,7 @@ local EcounterTrackingEditBoxes = {}
 
 local moveable = false
 local EncounterTimer = nil
+local EncounterTimeIndex = nil
 
 local tempFrame
 
@@ -136,20 +137,27 @@ function AZP.TimedEncounters:OnLoad()
                 insets = { left = 1, right = 1, top = 1, bottom = 1 },
             })
             AZPTECombatBar:SetBackdropColor(0, 0, 0, 0)
-            local x1, x2, x3, x4, x5 = AZPTECombatBar:GetPoint()
-            AZPTELocation = {x1, x4, x5}
+            local x1, _, _, x4, x5 = AZPTETimerFrame:GetPoint()
+            print(AZPTETimerFrame:GetPoint())
+            TEFrameLocation = {x1, x4, x5}
+            local y1, _, _, y4, y5 = AZPTECombatBar:GetPoint()
+            print(AZPTECombatBar:GetPoint())
+            TECombatFrameLocation = {y1, y4, y5}
             moveable = false
         end
     end)
 
     AZP.TimedEncounters:ShareVersion()
-    AZP.TimedEncounters:CreateCombatBar()
 end
 
 function AZP.TimedEncounters:CreateCombatBar()
     AZPTECombatBar = CreateFrame("FRAME", nil, UIParent, "BackdropTemplate")
     AZPTECombatBar:SetSize(GetScreenWidth() * 0.75, 100)
-    AZPTECombatBar:SetPoint("CENTER", 0, 400)
+    if TECombatFrameLocation ~= nil then
+        AZPTECombatBar:SetPoint(TECombatFrameLocation[1], TECombatFrameLocation[2], TECombatFrameLocation[3])
+    else
+        AZPTECombatBar:SetPoint("CENTER", 0, 400)
+    end
     AZPTECombatBar:SetBackdrop({
         bgFile = "Interface/Tooltips/UI-Tooltip-Background",
         edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
@@ -215,11 +223,8 @@ function AZP.TimedEncounters:PlaceMarkers()
             AZPTECombatBar.checkPoints.timers[i]:SetText(AZPTESavedList[i][1] .. "s")
             AZPTECombatBar.checkPoints.HPs[i]:SetText(AZPTESavedList[i][2] .. "%")
         else
-            AZPTECombatBar.checkPoints.timers[i]:SetText("")
-            AZPTECombatBar.checkPoints.HPs[i]:SetText("")
-            --AZPTECombatBar.checkPoints.markers[i]:SetSize(0, 0)
-            --AZPTECombatBar.checkPoints.markers[i]:SetPoint()
-            AZPTECombatBar.checkPoints:ClearAllPoints()
+            AZPTECombatBar.checkPoints[i]:ClearAllPoints()
+            AZPTECombatBar.checkPoints[i]:SetPoint("RIGHT", 0, 1000)
         end
     end
 end
@@ -242,8 +247,12 @@ function AZP.TimedEncounters:CreateAZPTETimerFrame()
     end
 
     AZPTETimerFrame = CreateFrame("FRAME", nil, UIParent, "BackdropTemplate")
-    AZPTETimerFrame:SetSize(400, 300)
-    AZPTETimerFrame:SetPoint("CENTER", -750, 0)
+    AZPTETimerFrame:SetSize(350, 275)
+    if TEFrameLocation ~= nil then
+        AZPTETimerFrame:SetPoint(TEFrameLocation[1], TEFrameLocation[2], TEFrameLocation[3])
+    else
+        AZPTETimerFrame:SetPoint("CENTER", -750, 0)
+    end
     AZPTETimerFrame:SetBackdrop({
         bgFile = "Interface/Tooltips/UI-Tooltip-Background",
         edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
@@ -271,12 +280,12 @@ function AZP.TimedEncounters:CreateAZPTETimerFrame()
     AZPTETimerFrame.Difference = {}
     AZPTETimerFrame.Plan.Header = AZPTETimerFrame:CreateFontString("AZPTETimerFrame", "ARTWORK", "GameFontNormalLarge")
     AZPTETimerFrame.Plan.Header:SetSize(100, 20)
-    AZPTETimerFrame.Plan.Header:SetPoint("TOP", -85, -40)
+    AZPTETimerFrame.Plan.Header:SetPoint("TOP", -125, -40)
     AZPTETimerFrame.Plan.Header:SetJustifyH("RIGHT")
     AZPTETimerFrame.Plan.Header:SetText("Plan")
     AZPTETimerFrame.HPActual.Header = AZPTETimerFrame:CreateFontString("AZPTETimerFrame", "ARTWORK", "GameFontNormalLarge")
     AZPTETimerFrame.HPActual.Header:SetSize(100, 20)
-    AZPTETimerFrame.HPActual.Header:SetPoint("TOP", 0, -40)
+    AZPTETimerFrame.HPActual.Header:SetPoint("TOP", -25, -40)
     AZPTETimerFrame.HPActual.Header:SetText("HP%")
     AZPTETimerFrame.CurrentTimer.Header = AZPTETimerFrame:CreateFontString("AZPTETimerFrame", "ARTWORK", "GameFontNormalLarge")
     AZPTETimerFrame.CurrentTimer.Header:SetSize(100, 20)
@@ -284,25 +293,25 @@ function AZP.TimedEncounters:CreateAZPTETimerFrame()
     AZPTETimerFrame.CurrentTimer.Header:SetText("Timer")
     AZPTETimerFrame.Difference.Header = AZPTETimerFrame:CreateFontString("AZPTETimerFrame", "ARTWORK", "GameFontNormalLarge")
     AZPTETimerFrame.Difference.Header:SetSize(100, 20)
-    AZPTETimerFrame.Difference.Header:SetPoint("TOP", 150, -40)
+    AZPTETimerFrame.Difference.Header:SetPoint("TOP", 125, -40)
     AZPTETimerFrame.Difference.Header:SetText("Difference")
     for i = 1, #EncounterTrackingData do
         AZPTETimerFrame.Plan[i] = AZPTETimerFrame:CreateFontString("AZPTETimerFrame", "ARTWORK", "GameFontNormalLarge")
         AZPTETimerFrame.Plan[i]:SetSize(100, 20)
-        AZPTETimerFrame.Plan[i]:SetPoint("TOP", -85, -20 * i - 40)
+        AZPTETimerFrame.Plan[i]:SetPoint("TOP", -125, -20 * i - 40)
         AZPTETimerFrame.Plan[i]:SetJustifyH("RIGHT")
         if AZPTESavedList[i][1] ~= nil and AZPTESavedList[i][2] ~= nil then
             AZPTETimerFrame.Plan[i]:SetText(AZPTESavedList[i][2] .. "% at " .. AZPTESavedList[i][1] .. "s")
         end
         AZPTETimerFrame.HPActual[i] = AZPTETimerFrame:CreateFontString("AZPTETimerFrame", "ARTWORK", "GameFontNormalLarge")
         AZPTETimerFrame.HPActual[i]:SetSize(50, 20)
-        AZPTETimerFrame.HPActual[i]:SetPoint("TOP", 0, -20 * i - 40)
+        AZPTETimerFrame.HPActual[i]:SetPoint("TOP", -25, -20 * i - 40)
         AZPTETimerFrame.CurrentTimer[i] = AZPTETimerFrame:CreateFontString("AZPTETimerFrame", "ARTWORK", "GameFontNormalLarge")
         AZPTETimerFrame.CurrentTimer[i]:SetSize(50, 20)
         AZPTETimerFrame.CurrentTimer[i]:SetPoint("TOP", 50, -20 * i - 40)
         AZPTETimerFrame.Difference[i] = AZPTETimerFrame:CreateFontString("AZPTETimerFrame", "ARTWORK", "GameFontNormalLarge")
         AZPTETimerFrame.Difference[i]:SetSize(50, 20)
-        AZPTETimerFrame.Difference[i]:SetPoint("TOP", 150, -20 * i - 40)
+        AZPTETimerFrame.Difference[i]:SetPoint("TOP", 125, -20 * i - 40)
     end
 
     --AZPTETimerFrame:Hide()
@@ -368,13 +377,17 @@ function AZP.TimedEncounters:DelayedExecution(delayTime, delayedFunction)
     frame:Show()
 end
 
-function AZP.TimedEncounters:TrackHealth(i)
+function AZP.TimedEncounters:TrackHealth()
     local bossMaxHealth = UnitHealthMax("boss1")
     local bossCurrentHealth = UnitHealth("boss1")
     local bossPercentHealth = math.floor(bossCurrentHealth/bossMaxHealth*10000)/100
-    EncounterTrackingData[i][2] = bossPercentHealth
-    AZPTETimerFrame.HPActual[i]:SetText(bossPercentHealth)
-    local percentageDifference =  AZPTESavedList[i][2] - bossPercentHealth
+    return bossPercentHealth
+end
+
+function AZP.TimedEncounters:UpdateHealth(i, curPercentHealth)
+    EncounterTrackingData[i][2] = curPercentHealth
+    AZPTETimerFrame.HPActual[i]:SetText(curPercentHealth)
+    local percentageDifference =  AZPTESavedList[i][2] - curPercentHealth
     if percentageDifference > 0 then percentageDifference = "+" .. percentageDifference end
     AZPTETimerFrame.Difference[i]:SetText(percentageDifference)
 
@@ -408,11 +421,13 @@ function AZP.TimedEncounters:ResetResults()
 end
 
 function AZP.TimedEncounters:Ticker()
+    EncounterTimeIndex = EncounterTimeIndex + 1
     for i = 1, #EncounterTrackingData do
+        local curPercentHealth = AZP.TimedEncounters:TrackHealth()
         if EncounterTrackingData[i][1] < 0 then
             AZPTETimerFrame.CurrentTimer[i]:SetText("-")
         elseif EncounterTrackingData[i][1] == 0 then
-            AZP.TimedEncounters:TrackHealth(i)
+            AZP.TimedEncounters:UpdateHealth(i, curPercentHealth)
             AZPTETimerFrame.CurrentTimer[i]:SetText(EncounterTrackingData[i][1])
             AZPTECombatBar.checkPoints.timers[i]:SetText(EncounterTrackingData[i][1])
             EncounterTrackingData[i][1] = EncounterTrackingData[i][1] - 1
@@ -422,7 +437,6 @@ function AZP.TimedEncounters:Ticker()
             EncounterTrackingData[i][1] = EncounterTrackingData[i][1] - 1
         end
     end
-    --AZP.TimedEncounters:DisplayResults()
 end
 
 function AZP.TimedEncounters:ShareVersion()
@@ -466,6 +480,7 @@ function AZP.TimedEncounters:OnEvent(event, ...)
     elseif event == "ENCOUNTER_START" then
         AZP.TimedEncounters:ResetResults()
         AZPTECombatBar:Show()
+        EncounterTimeIndex = 0
         EncounterTimer = C_Timer.NewTicker(1, function() AZP.TimedEncounters:Ticker() end, 1000)
     elseif event == "ENCOUNTER_END" then
         EncounterTimer:Cancel()
@@ -473,8 +488,17 @@ function AZP.TimedEncounters:OnEvent(event, ...)
         AZPTETimerFrame:Show()
     elseif event == "VARIABLES_LOADED" then
         AZP.TimedEncounters:CreateAZPTETimerFrame()
+        AZP.TimedEncounters:CreateCombatBar()
         AZP.TimedEncounters:PlaceMarkers()
     end
 end
 
 AZP.TimedEncounters:OnLoad()
+
+SLASH_TE1 = '/te'
+SlashCmdList['TE'] =
+    function(arg)
+        if arg == "show" then
+            AZPTETimerFrame:Show()
+        end
+    end
