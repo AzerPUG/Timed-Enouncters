@@ -29,38 +29,10 @@ local tempFrame
 
 function AZP.TimedEncounters:OnLoad()
     local EventFrame = CreateFrame("FRAME", nil)
-    EventFrame:RegisterEvent("CHAT_MSG_ADDON")
-    EventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
     EventFrame:RegisterEvent("ENCOUNTER_START")
     EventFrame:RegisterEvent("ENCOUNTER_END")
     EventFrame:RegisterEvent("VARIABLES_LOADED")
     EventFrame:SetScript("OnEvent", AZP.TimedEncounters.OnEvent)
-
-    C_ChatInfo.RegisterAddonMessagePrefix("AZPVERSIONS")
-
-    TEUpdateFrame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    TEUpdateFrame:SetPoint("CENTER", 0, 250)
-    TEUpdateFrame:SetSize(400, 200)
-    TEUpdateFrame:SetBackdrop({
-        bgFile = "Interface/Tooltips/UI-Tooltip-Background",
-        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-        edgeSize = 12,
-        insets = { left = 1, right = 1, top = 1, bottom = 1 },
-    })
-    TEUpdateFrame:SetBackdropColor(0.25, 0.25, 0.25, 0.80)
-    TEUpdateFrame.header = TEUpdateFrame:CreateFontString("TEUpdateFrame", "ARTWORK", "GameFontNormalHuge")
-    TEUpdateFrame.header:SetPoint("TOP", 0, -10)
-    TEUpdateFrame.header:SetText("|cFFFF0000TimedEncounters is out of date!|r")
-
-    TEUpdateFrame.text = TEUpdateFrame:CreateFontString("TEUpdateFrame", "ARTWORK", "GameFontNormalLarge")
-    TEUpdateFrame.text:SetPoint("TOP", 0, -40)
-    TEUpdateFrame.text:SetText("Error!")
-
-    local TEUpdateFrameCloseButton = CreateFrame("Button", nil, TEUpdateFrame, "UIPanelCloseButton")
-    TEUpdateFrameCloseButton:SetWidth(25)
-    TEUpdateFrameCloseButton:SetHeight(25)
-    TEUpdateFrameCloseButton:SetPoint("TOPRIGHT", TEUpdateFrame, "TOPRIGHT", 2, 2)
-    TEUpdateFrameCloseButton:SetScript("OnClick", function() TEUpdateFrame:Hide() end )
 
     TEOptionsPanel = CreateFrame("FRAME", nil)
     TEOptionsPanel.name = "Timed Encounters"
@@ -138,16 +110,12 @@ function AZP.TimedEncounters:OnLoad()
             })
             AZPTECombatBar:SetBackdropColor(0, 0, 0, 0)
             local x1, _, _, x4, x5 = AZPTETimerFrame:GetPoint()
-            print(AZPTETimerFrame:GetPoint())
             TEFrameLocation = {x1, x4, x5}
             local y1, _, _, y4, y5 = AZPTECombatBar:GetPoint()
-            print(AZPTECombatBar:GetPoint())
             TECombatFrameLocation = {y1, y4, y5}
             moveable = false
         end
     end)
-
-    AZP.TimedEncounters:ShareVersion()
 end
 
 function AZP.TimedEncounters:CreateCombatBar()
@@ -158,13 +126,6 @@ function AZP.TimedEncounters:CreateCombatBar()
     else
         AZPTECombatBar:SetPoint("CENTER", 0, 400)
     end
-    AZPTECombatBar:SetBackdrop({
-        bgFile = "Interface/Tooltips/UI-Tooltip-Background",
-        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-        edgeSize = 12,
-        insets = { left = 1, right = 1, top = 1, bottom = 1 },
-    })
-    AZPTECombatBar:SetBackdropColor(0.25, 0.25, 0.25, 0.80)
     AZPTECombatBar:SetScript("OnDragStart", AZPTECombatBar.StartMoving)
     AZPTECombatBar:SetScript("OnDragStop", AZPTECombatBar.StopMovingOrSizing)
 
@@ -188,14 +149,6 @@ function AZP.TimedEncounters:CreateCombatBar()
     for i = 1, 10 do
         AZPTECombatBar.checkPoints[i] = CreateFrame("FRAME", nil, BossHPBar, "BackdropTemplate")
         AZPTECombatBar.checkPoints[i]:SetSize(1, 1)
-        -- AZPTECombatBar.checkPoints[i]:SetBackdrop({
-        --     bgFile = "Interface/Tooltips/UI-Tooltip-Background",
-        --     edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-        --     edgeSize = 12,
-        --     insets = { left = 1, right = 1, top = 1, bottom = 1 },
-        -- })
-        --AZPTECombatBar.checkPoints[i]:SetBackdropColor(0.5, 0.5, 0.5, 1)
-
         AZPTECombatBar.checkPoints.markers[i] = CreateFrame("FRAME", nil, AZPTECombatBar.checkPoints[i], "BackdropTemplate")
         AZPTECombatBar.checkPoints.markers[i]:SetSize(5, 50)
         AZPTECombatBar.checkPoints.markers[i]:SetPoint("CENTER", 0, 0)
@@ -213,7 +166,7 @@ function AZP.TimedEncounters:CreateCombatBar()
         AZPTECombatBar.checkPoints.HPs[i]:SetText("HP+Diff", i)
     end
 
-    --AZPTECombatBar:Hide()
+    AZPTECombatBar:Hide()
 end
 
 function AZP.TimedEncounters:PlaceMarkers()
@@ -381,6 +334,7 @@ function AZP.TimedEncounters:TrackHealth()
     local bossMaxHealth = UnitHealthMax("boss1")
     local bossCurrentHealth = UnitHealth("boss1")
     local bossPercentHealth = math.floor(bossCurrentHealth/bossMaxHealth*10000)/100
+    BossHPBar:SetValue(bossCurrentHealth/bossMaxHealth*10000)
     return bossPercentHealth
 end
 
@@ -392,8 +346,6 @@ function AZP.TimedEncounters:UpdateHealth(i, curPercentHealth)
     AZPTETimerFrame.Difference[i]:SetText(percentageDifference)
 
     AZPTECombatBar.checkPoints.HPs[i]:SetText(AZPTESavedList[i][2] .. "%\n" .. percentageDifference .. "")
-
-    BossHPBar:SetValue(bossCurrentHealth/bossMaxHealth*10000)
 end
 
 function AZP.TimedEncounters:DisplayResults()
@@ -439,52 +391,15 @@ function AZP.TimedEncounters:Ticker()
     end
 end
 
-function AZP.TimedEncounters:ShareVersion()
-    local versionString = string.format("|TT:%d|", AZP.VersionControl.TimedEncounters)
-    AZP.TimedEncounters:DelayedExecution(10, function()
-        if IsInGroup() then
-            if IsInRaid() then
-                C_ChatInfo.SendAddonMessage("AZPVERSIONS", versionString ,"RAID", 1)
-            else
-                C_ChatInfo.SendAddonMessage("AZPVERSIONS", versionString ,"PARTY", 1)
-            end
-        end
-        if IsInGuild() then
-            C_ChatInfo.SendAddonMessage("AZPVERSIONS", versionString ,"GUILD", 1)
-        end
-    end)
-end
-
-function AZP.TimedEncounters:ReceiveVersion(version)
-    if version > TEVersion then
-        if (not HaveShowedUpdateNotification) then
-            HaveShowedUpdateNotification = true
-            TEUpdateFrame:Show()
-            TEUpdateFrame.text:SetText(
-                "Please download the new version through the CurseForge app.\n" ..
-                "Or use the CurseForge website to download it manually!\n\n" ..
-                "Newer Version: v" .. version .. "\n" ..
-                "Your version: v" .. TEVersion)
-        end
-    end
-end
-
 function AZP.TimedEncounters:OnEvent(event, ...)
-    if event == "CHAT_MSG_ADDON" then
-        local prefix, payload, _, sender = ...
-        if prefix == "AZPTT_VERSION" then
-            AZP.TimedEncounters:ReceiveVersion(tonumber(payload))
-        end
-    elseif event == "GROUP_ROSTER_UPDATE" then
-        AZP.TimedEncounters:ShareVersion()
-    elseif event == "ENCOUNTER_START" then
+    if event == "ENCOUNTER_START" then
         AZP.TimedEncounters:ResetResults()
         AZPTECombatBar:Show()
         EncounterTimeIndex = 0
         EncounterTimer = C_Timer.NewTicker(1, function() AZP.TimedEncounters:Ticker() end, 1000)
     elseif event == "ENCOUNTER_END" then
         EncounterTimer:Cancel()
-        --AZPTECombatBar:Hide()
+        AZPTECombatBar:Hide()
         AZPTETimerFrame:Show()
     elseif event == "VARIABLES_LOADED" then
         AZP.TimedEncounters:CreateAZPTETimerFrame()
