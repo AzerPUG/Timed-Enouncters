@@ -16,7 +16,7 @@
 ***Description and Features Here*** 
 
 # Bugs, Errors, Glitches and Requests.
-If you find any of the above, please do not hessitate to create a GitHub Issue here: ***GitHub Issues Link Here***  
+If you find any of the above, please do not hesitate to create a GitHub Issue here: ***GitHub Issues Link Here***  
 Or you can join our Discord and let us know in the AzerTech channel: http://www.azerpug.com/discord  
 Please note that our Discord Verification level prevents new people from talking/commenting/ranking in the first 10 minutes!
 
