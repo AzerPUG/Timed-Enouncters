@@ -11,7 +11,7 @@ if AZP.OnLoad == nil then AZP.OnLoad = {} end
 if AZP.OnEvent == nil then AZP.OnEvent = {} end
 if AZP.OnEvent == nil then AZP.OnEvent = {} end
 
-AZP.VersionControl.TimedEncounters = 1
+AZP.VersionControl.TimedEncounters = 3
 AZP.TimedEncounters = {}
 
 local AZPTETimerFrame, AZPTECombatBar, TEUpdateFrame = nil, nil, nil
