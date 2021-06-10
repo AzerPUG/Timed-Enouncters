@@ -11,12 +11,12 @@ if AZP.OnLoad == nil then AZP.OnLoad = {} end
 if AZP.OnEvent == nil then AZP.OnEvent = {} end
 if AZP.OnEvent == nil then AZP.OnEvent = {} end
 
-AZP.VersionControl.TimedEncounters = 3
+AZP.VersionControl.TimedEncounters = 4
 AZP.TimedEncounters = {}
 
-local AZPTETimerFrame, AZPTECombatBar, TEUpdateFrame = nil, nil, nil
+local AZPTETimerFrame, AZPTECombatBar, UpdateFrame, EventFrame = nil, nil, nil, nil
 local BossHPBar = nil
-local TEOptionsPanel
+local AZPTimedEncountersOptionsPanel
 local HaveShowedUpdateNotification = false
 EncounterTrackingData = {}
 local EcounterTrackingEditBoxes = {}
@@ -27,30 +27,101 @@ local EncounterTimeIndex = nil
 
 local tempFrame
 
-function AZP.TimedEncounters:OnLoad()
-    local EventFrame = CreateFrame("FRAME", nil)
+function AZP.TimedEncounters:OnLoadBoth()
+
+end
+
+function AZP.TimedEncounters:OnLoadCore()
+    AZP.TimedEncounters:OnLoadBoth()
+
+    AZP.Core:RegisterEvents("VARIABLES_LOADED", function(...) AZP.TimedEncounters:eventVariablesLoaded(...) end)
+    AZP.Core:RegisterEvents("ENCOUNTER_START", function(...) AZP.TimedEncounters:eventEncounterStart() end)
+    AZP.Core:RegisterEvents("ENCOUNTER_END", function(...) AZP.TimedEncounters:eventEncounterEnd() end)
+
+    AZP.OptionsPanels:RemovePanel("Timed Encounters")
+    AZP.OptionsPanels:Generic("Timed Encounters", optionHeader, function(frame)
+        AZPTimedEncountersOptionPanel = frame
+        AZP.TimedEncounters:FillOptionsPanel(frame)
+    end)
+end
+
+function AZP.TimedEncounters:OnLoadSelf()
+    EventFrame = CreateFrame("FRAME", nil)
     EventFrame:RegisterEvent("ENCOUNTER_START")
     EventFrame:RegisterEvent("ENCOUNTER_END")
     EventFrame:RegisterEvent("VARIABLES_LOADED")
+    EventFrame:RegisterEvent("CHAT_MSG_ADDON")
     EventFrame:SetScript("OnEvent", AZP.TimedEncounters.OnEvent)
 
-    TEOptionsPanel = CreateFrame("FRAME", nil)
-    TEOptionsPanel.name = "Timed Encounters"
-    InterfaceOptions_AddCategory(TEOptionsPanel)
+    UpdateFrame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    UpdateFrame:SetPoint("CENTER", 0, 250)
+    UpdateFrame:SetSize(400, 200)
+    UpdateFrame:SetBackdrop({
+        bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+        edgeSize = 12,
+        insets = { left = 1, right = 1, top = 1, bottom = 1 },
+    })
+    UpdateFrame:SetBackdropColor(0.25, 0.25, 0.25, 0.80)
+    UpdateFrame.header = UpdateFrame:CreateFontString("UpdateFrame", "ARTWORK", "GameFontNormalHuge")
+    UpdateFrame.header:SetPoint("TOP", 0, -10)
+    UpdateFrame.header:SetText("|cFFFF0000AzerPUG's Timed Encounters is out of date!|r")
 
-    local OptionsPanelTitle = TEOptionsPanel:CreateFontString(nil, "ARTWORK", "GameFontNormalHuge")
-    OptionsPanelTitle:SetText("Timed Encounters Options Panel")
-    OptionsPanelTitle:SetWidth(TEOptionsPanel:GetWidth())
-    OptionsPanelTitle:SetHeight(25)
-    OptionsPanelTitle:SetPoint("TOP", 0, -10)
+    UpdateFrame.text = UpdateFrame:CreateFontString("UpdateFrame", "ARTWORK", "GameFontNormalLarge")
+    UpdateFrame.text:SetPoint("TOP", 0, -40)
+    UpdateFrame.text:SetText("Error!")
 
-    TEOptionsPanel:Hide()
+    local UpdateFrameCloseButton = CreateFrame("Button", nil, UpdateFrame, "UIPanelCloseButton")
+    UpdateFrameCloseButton:SetWidth(25)
+    UpdateFrameCloseButton:SetHeight(25)
+    UpdateFrameCloseButton:SetPoint("TOPRIGHT", UpdateFrame, "TOPRIGHT", 2, 2)
+    UpdateFrameCloseButton:SetScript("OnClick", function() UpdateFrame:Hide() end )
 
+    UpdateFrame:Hide()
+
+    AZPTimedEncountersOptionsPanel = CreateFrame("FRAME", nil)
+    AZPTimedEncountersOptionsPanel.name = "|c0000FFFFAzerPUG's Timed Encounters|r"
+    InterfaceOptions_AddCategory(AZPTimedEncountersOptionsPanel)
+
+    AZPTimedEncountersOptionsPanel.Header = AZPTimedEncountersOptionsPanel:CreateFontString(nil, "ARTWORK", "GameFontNormalHuge")
+    AZPTimedEncountersOptionsPanel.Header:SetText("|c0000FFFFAzerPUG's Timed Encounters Options|r")
+    AZPTimedEncountersOptionsPanel.Header:SetWidth(AZPTimedEncountersOptionsPanel:GetWidth())
+    AZPTimedEncountersOptionsPanel.Header:SetHeight(25)
+    AZPTimedEncountersOptionsPanel.Header:SetPoint("TOP", 0, -10)
+
+    AZPTimedEncountersOptionsPanel.Footer = AZPTimedEncountersOptionsPanel:CreateFontString("AZPTimedEncountersOptionsPanel", "ARTWORK", "GameFontNormalLarge")
+    AZPTimedEncountersOptionsPanel.Footer:SetPoint("TOP", 0, -400)
+    AZPTimedEncountersOptionsPanel.Footer:SetText(
+        "|cFF00FFFFAzerPUG Links:\n" ..
+        "Website: www.azerpug.com\n" ..
+        "Discord: www.azerpug.com/discord\n" ..
+        "Twitch: www.twitch.tv/azerpug\n|r"
+    )
+
+    AZPTimedEncountersOptionsPanel:Hide()
+
+    AZP.TimedEncounters:FillOptionsPanel(AZPTimedEncountersOptionsPanel)
+
+    AZP.TimedEncounters:OnLoadBoth()
+end
+
+function AZP.TimedEncounters:FillOptionsPanel(frameToFill)
+    local headerFrame = CreateFrame("Frame", nil, frameToFill)
+    headerFrame:SetSize(200, 25)
+    headerFrame:SetPoint("LEFT", 75, 200)
+    headerFrame.time = headerFrame:CreateFontString("headerFrame", "ARTWORK", "GameFontNormalLarge")
+    headerFrame.time:SetSize(100, 25)
+    headerFrame.time:SetPoint("LEFT", 50, 0)
+    headerFrame.time:SetText("Time Marker:")
+    headerFrame.health = headerFrame:CreateFontString("headerFrame", "ARTWORK", "GameFontNormalLarge")
+    headerFrame.health:SetSize(100, 25)
+    headerFrame.health:SetPoint("LEFT", 175, 0)
+    headerFrame.health:SetText("Health Marker:")
     for i = 1, 10 do
         EncounterTrackingData[i] = {}
-        local counterFrame = CreateFrame("Frame", nil, TEOptionsPanel)
+        local counterFrame = CreateFrame("Frame", nil, frameToFill)
         counterFrame:SetSize(200, 25)
-        counterFrame:SetPoint("LEFT", 75, -30*i + 250)
+        counterFrame:SetPoint("LEFT", 75, -30*i + 200)
         counterFrame.timeEditBox = CreateFrame("EditBox", nil, counterFrame, "InputBoxTemplate")
         counterFrame.timeEditBox:SetSize(100, 25)
         counterFrame.timeEditBox:SetPoint("LEFT", 50, 0)
@@ -71,10 +142,10 @@ function AZP.TimedEncounters:OnLoad()
         counterFrame.healthEditBox:SetScript("OnEditFocusLost", function() AZP.TimedEncounters:PullNumbersFromEditBox(i) end)
     end
 
-    local AZPTEToggleMoveButton = CreateFrame("Button", nil, TEOptionsPanel, "UIPanelButtonTemplate")
+    local AZPTEToggleMoveButton = CreateFrame("Button", nil, frameToFill, "UIPanelButtonTemplate")
     AZPTEToggleMoveButton:SetText("Toggle Movement!")
     AZPTEToggleMoveButton:SetSize(100, 25)
-    AZPTEToggleMoveButton:SetPoint("TOP", 100, -50)
+    AZPTEToggleMoveButton:SetPoint("TOP", 100, -100)
     AZPTEToggleMoveButton:SetScript("OnClick",
     function()
         if moveable == false then
@@ -116,6 +187,25 @@ function AZP.TimedEncounters:OnLoad()
             moveable = false
         end
     end)
+end
+
+function AZP.TimedEncounters:eventVariablesLoaded()
+    AZP.TimedEncounters:CreateAZPTETimerFrame()
+    AZP.TimedEncounters:CreateCombatBar()
+    AZP.TimedEncounters:PlaceMarkers()
+end
+
+function AZP.TimedEncounters:eventEncounterEnd()
+    EncounterTimer:Cancel()
+    AZPTECombatBar:Hide()
+    AZPTETimerFrame:Show()
+end
+
+function AZP.TimedEncounters:eventEncounterStart()
+    AZP.TimedEncounters:ResetResults()
+    AZPTECombatBar:Show()
+    EncounterTimeIndex = 0
+    EncounterTimer = C_Timer.NewTicker(1, function() AZP.TimedEncounters:Ticker() end, 1000)
 end
 
 function AZP.TimedEncounters:CreateCombatBar()
@@ -166,7 +256,7 @@ function AZP.TimedEncounters:CreateCombatBar()
         AZPTECombatBar.checkPoints.HPs[i]:SetText("HP+Diff", i)
     end
 
-    AZPTECombatBar:Hide()
+    --AZPTECombatBar:Hide()
 end
 
 function AZP.TimedEncounters:PlaceMarkers()
@@ -393,22 +483,17 @@ end
 
 function AZP.TimedEncounters:OnEvent(event, ...)
     if event == "ENCOUNTER_START" then
-        AZP.TimedEncounters:ResetResults()
-        AZPTECombatBar:Show()
-        EncounterTimeIndex = 0
-        EncounterTimer = C_Timer.NewTicker(1, function() AZP.TimedEncounters:Ticker() end, 1000)
+        AZP.TimedEncounters:eventEncounterStart()
     elseif event == "ENCOUNTER_END" then
-        EncounterTimer:Cancel()
-        AZPTECombatBar:Hide()
-        AZPTETimerFrame:Show()
+        AZP.TimedEncounters:eventEncounterEnd()
     elseif event == "VARIABLES_LOADED" then
-        AZP.TimedEncounters:CreateAZPTETimerFrame()
-        AZP.TimedEncounters:CreateCombatBar()
-        AZP.TimedEncounters:PlaceMarkers()
+        AZP.TimedEncounters:eventVariablesLoaded()
     end
 end
 
-AZP.TimedEncounters:OnLoad()
+if not IsAddOnLoaded("AzerPUGsCore") then
+    AZP.TimedEncounters:OnLoadSelf()
+end
 
 SLASH_TE1 = '/te'
 SlashCmdList['TE'] =
