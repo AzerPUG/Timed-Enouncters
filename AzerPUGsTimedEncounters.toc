@@ -6,4 +6,5 @@
 ## Version: SL 9.0.5 (For actual addon version, check TimedEncounters.lua)
 ## SavedVariables: AZPTESavedList TEFrameLocation TECombatFrameLocation
 
+dataTables.lua
 TimedEncounters.lua

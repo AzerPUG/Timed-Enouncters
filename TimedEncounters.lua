@@ -6,13 +6,12 @@
         -- Need extra tracking function for HP based on listed %.
 
 if AZP == nil then AZP = {} end
+if AZP.TimedEncounters == nil then AZP.TimedEncounters = {} end
 if AZP.VersionControl == nil then AZP.VersionControl = {} end
 if AZP.OnLoad == nil then AZP.OnLoad = {} end
 if AZP.OnEvent == nil then AZP.OnEvent = {} end
-if AZP.OnEvent == nil then AZP.OnEvent = {} end
 
 AZP.VersionControl.TimedEncounters = 4
-AZP.TimedEncounters = {}
 
 local AZPTETimerFrame, AZPTECombatBar, UpdateFrame, EventFrame = nil, nil, nil, nil
 local BossHPBar = nil
@@ -145,7 +144,7 @@ function AZP.TimedEncounters:FillOptionsPanel(frameToFill)
     local AZPTEToggleMoveButton = CreateFrame("Button", nil, frameToFill, "UIPanelButtonTemplate")
     AZPTEToggleMoveButton:SetText("Toggle Movement!")
     AZPTEToggleMoveButton:SetSize(100, 25)
-    AZPTEToggleMoveButton:SetPoint("TOP", 100, -100)
+    AZPTEToggleMoveButton:SetPoint("TOPLEFT", 375, -100)
     AZPTEToggleMoveButton:SetScript("OnClick",
     function()
         if moveable == false then
@@ -187,6 +186,42 @@ function AZP.TimedEncounters:FillOptionsPanel(frameToFill)
             moveable = false
         end
     end)
+
+    frameToFill.BarStyleDropDown = CreateFrame("Button", nil, frameToFill, "UIDropDownMenuTemplate")
+    frameToFill.BarStyleDropDown:SetPoint("TOPLEFT", 350, -150)
+
+    UIDropDownMenu_SetWidth(frameToFill.BarStyleDropDown, 150)
+    UIDropDownMenu_SetText(frameToFill.BarStyleDropDown, "UI-StatusBar")
+
+    local BarStyles = AZP.TimedEncounters.dataTables.BarStyles
+    local StyleVars = AZP.TimedEncounters.StyleVars
+    UIDropDownMenu_Initialize(frameToFill.BarStyleDropDown, function(self, level, menuList)
+        local info = UIDropDownMenu_CreateInfo()
+        info.func = AZP.TimedEncounters.SetValue
+        for i = 1, #BarStyles do
+            info.text = string.match(string.match(BarStyles[i], "\\(.*)"), "\\(.*)")
+            info.arg1 = "bar"
+            info.arg2 = BarStyles[i]
+            UIDropDownMenu_AddButton(info, 1)
+        end
+    end)
+end
+
+function AZP.TimedEncounters:SetValue(var, newValue)
+    local StyleVars = AZP.TimedEncounters.StyleVars
+    print(var, newValue)
+    if var == "font" then StyleVars.font = newValue
+    elseif var == "size" then StyleVars.size = newValue
+    elseif var == "outline" then StyleVars.outline = newValue
+    elseif var == "monochrome" then StyleVars.monochrome = newValue
+    elseif var == "bar" then StyleVars.bar = newValue
+    end
+    local barStyleName = string.match(string.match(StyleVars[var], "\\(.*)"), "\\(.*)")
+    UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.BarStyleDropDown, barStyleName)
+    BossHPBar:SetStatusBarTexture(StyleVars.bar)
+    BossHPBar.bg:SetTexture(StyleVars.bar)
+    --testFrame.Font:SetFont(StyleVars.font, StyleVars.size, StyleVars.outline .. ", " .. StyleVars.monochrome)
+    CloseDropDownMenus()
 end
 
 function AZP.TimedEncounters:eventVariablesLoaded()
