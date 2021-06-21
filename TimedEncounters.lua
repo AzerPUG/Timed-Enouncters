@@ -20,6 +20,7 @@ local AZPTimedEncountersOptionsPanel
 local HaveShowedUpdateNotification = false
 EncounterTrackingData = {}
 local EcounterTrackingEditBoxes = {}
+local endOfCombatPost = {}
 
 local moveable = false
 local EncounterTimer = nil
@@ -28,7 +29,9 @@ local EncounterTimeIndex = nil
 local tempFrame
 
 function AZP.TimedEncounters:OnLoadBoth()
-
+    if AZPTEScale == nil then
+        AZPTEScale = 0.8
+    end
 end
 
 function AZP.TimedEncounters:OnLoadCore()
@@ -187,18 +190,56 @@ function AZP.TimedEncounters:FillOptionsPanel(frameToFill)
             moveable = false
         end
     end)
+
+    local AZPTEScaleSlider = CreateFrame("SLIDER", "AZPTEScaleSlider", frameToFill, "OptionsSliderTemplate")
+    AZPTEScaleSlider:SetHeight(20)
+    AZPTEScaleSlider:SetWidth(100)
+    AZPTEScaleSlider:SetOrientation('HORIZONTAL')
+    AZPTEScaleSlider:SetPoint("TOP", 150, -300)
+    AZPTEScaleSlider:EnableMouse(true)
+    AZPTEScaleSlider.tooltipText = 'Scale BossBar'
+    AZPTEScaleSliderLow:SetText('small')
+    AZPTEScaleSliderHigh:SetText('big')
+    AZPTEScaleSliderText:SetText('BossBar Scale')
+
+    AZPTEScaleSlider:Show()
+    AZPTEScaleSlider:SetMinMaxValues(0.5, 2)
+    AZPTEScaleSlider:SetValueStep(0.1)
+
+    AZPTEScaleSlider:SetScript("OnValueChanged", AZP.TimedEncounters.setScale)
 end
 
 function AZP.TimedEncounters:eventVariablesLoaded()
     AZP.TimedEncounters:CreateAZPTETimerFrame()
     AZP.TimedEncounters:CreateCombatBar()
     AZP.TimedEncounters:PlaceMarkers()
+    BossHPBar:SetScale(AZPTEScale)
+end
+
+function AZP.TimedEncounters:setScale(scale)
+    AZPTEScale = scale
+    BossHPBar:SetScale(scale)
 end
 
 function AZP.TimedEncounters:eventEncounterEnd()
     EncounterTimer:Cancel()
     AZPTECombatBar:Hide()
+    AZP.TimedEncounters:SendToRaidChat()
     AZPTETimerFrame:Show()
+
+    -- Reset AddOn to start.
+end
+
+function AZP.TimedEncounters:SendToRaidChat()
+    --SendChatMessage("AzerPUG's Timed Encounters Post-Combat Data:", "RAID")
+    SendChatMessage("AzerPUG's Timed Encounters Post-Combat Data:", "WHISPER", nil, "Tex-Ravencrest")
+    for i = 1, 10 do
+        if EncounterTrackingData[i] ~= nil then
+            local raidMessage = "Boss was at " .. EncounterTrackingData[i][2] .. "% at " .. AZPTESavedList[i][1] .. " seconds into the fight!"
+            --SendChatMessage(raidMessage, "RAID")
+            SendChatMessage(raidMessage, "WHISPER", nil, "Tex-Ravencrest")
+        end
+    end
 end
 
 function AZP.TimedEncounters:eventEncounterStart()
@@ -227,6 +268,7 @@ function AZP.TimedEncounters:CreateCombatBar()
     BossHPBar:SetReverseFill(true)
     BossHPBar:SetPoint("CENTER", 0, 0)
     BossHPBar:SetStatusBarColor(0, 1, 0)
+    BossHPBar:SetScale(AZPTEScale)
     BossHPBar.bg = BossHPBar:CreateTexture(nil, "BACKGROUND")
     BossHPBar.bg:SetTexture("Interface\\TARGETINGFRAME\\UI-StatusBar")
     BossHPBar.bg:SetAllPoints(true)
@@ -502,3 +544,7 @@ SlashCmdList['TE'] =
             AZPTETimerFrame:Show()
         end
     end
+
+
+
+    -- Reset Bar on EncounterStart!
