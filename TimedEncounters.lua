@@ -11,7 +11,9 @@ if AZP.VersionControl == nil then AZP.VersionControl = {} end
 if AZP.OnLoad == nil then AZP.OnLoad = {} end
 if AZP.OnEvent == nil then AZP.OnEvent = {} end
 
-AZP.VersionControl.TimedEncounters = 4
+AZP.VersionControl["TimedEncounters"] = 5
+if AZP.TimedEncounters == nil then AZP.TimedEncounters = {} end
+if AZP.TimedEncounters.Events == nil then AZP.TimedEncounters.Events = {} end
 
 local AZPTETimerFrame, AZPTECombatBar, UpdateFrame, EventFrame = nil, nil, nil, nil
 local BossHPBar = nil
@@ -33,9 +35,9 @@ end
 function AZP.TimedEncounters:OnLoadCore()
     AZP.TimedEncounters:OnLoadBoth()
 
-    AZP.Core:RegisterEvents("VARIABLES_LOADED", function(...) AZP.TimedEncounters:eventVariablesLoaded(...) end)
-    AZP.Core:RegisterEvents("ENCOUNTER_START", function(...) AZP.TimedEncounters:eventEncounterStart() end)
-    AZP.Core:RegisterEvents("ENCOUNTER_END", function(...) AZP.TimedEncounters:eventEncounterEnd() end)
+    AZP.Core:RegisterEvents("VARIABLES_LOADED", function(...) AZP.TimedEncounters.Events:VariablesLoaded(...) end)
+    AZP.Core:RegisterEvents("ENCOUNTER_START", function(...) AZP.TimedEncounters.Events:EncounterStart() end)
+    AZP.Core:RegisterEvents("ENCOUNTER_END", function(...) AZP.TimedEncounters.Events:EncounterEnd() end)
 
     AZP.OptionsPanels:RemovePanel("Timed Encounters")
     AZP.OptionsPanels:Generic("Timed Encounters", optionHeader, function(frame)
@@ -224,19 +226,19 @@ function AZP.TimedEncounters:SetValue(var, newValue)
     CloseDropDownMenus()
 end
 
-function AZP.TimedEncounters:eventVariablesLoaded()
+function AZP.TimedEncounters.Events:VariablesLoaded()
     AZP.TimedEncounters:CreateAZPTETimerFrame()
     AZP.TimedEncounters:CreateCombatBar()
     AZP.TimedEncounters:PlaceMarkers()
 end
 
-function AZP.TimedEncounters:eventEncounterEnd()
+function AZP.TimedEncounters.Events:EncounterEnd()
     EncounterTimer:Cancel()
     AZPTECombatBar:Hide()
     AZPTETimerFrame:Show()
 end
 
-function AZP.TimedEncounters:eventEncounterStart()
+function AZP.TimedEncounters.Events:EncounterStart()
     AZP.TimedEncounters:ResetResults()
     AZPTECombatBar:Show()
     EncounterTimeIndex = 0
@@ -518,11 +520,11 @@ end
 
 function AZP.TimedEncounters:OnEvent(event, ...)
     if event == "ENCOUNTER_START" then
-        AZP.TimedEncounters:eventEncounterStart()
+        AZP.TimedEncounters.Events:EncounterStart()
     elseif event == "ENCOUNTER_END" then
-        AZP.TimedEncounters:eventEncounterEnd()
+        AZP.TimedEncounters.Events:EncounterEnd()
     elseif event == "VARIABLES_LOADED" then
-        AZP.TimedEncounters:eventVariablesLoaded()
+        AZP.TimedEncounters.Events:VariablesLoaded()
     end
 end
 
