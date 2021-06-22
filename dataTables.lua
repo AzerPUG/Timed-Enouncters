@@ -1,16 +1,18 @@
 if AZP == nil then AZP = {} end
 if AZP.TimedEncounters == nil then AZP.TimedEncounters = {} end
 
-AZP.TimedEncounters.StyleVars = {}
-AZP.TimedEncounters.StyleVars.font = "Fonts\\FRIZQT__"
-AZP.TimedEncounters.StyleVars.size = 16
-AZP.TimedEncounters.StyleVars.outline = nil
-AZP.TimedEncounters.StyleVars.monochrome = nil
-AZP.TimedEncounters.StyleVars.bar = "Interface\\TargetingFrame\\UI-StatusBar"
+AZP.TimedEncounters.StyleVars =
+{
+    font = "Fonts\\FRIZQT__",
+    size = 16,
+    outline = nil,
+    monochrome = nil,
+    bar = "Interface\\TargetingFrame\\UI-StatusBar",
+}
 
 AZP.TimedEncounters.dataTables =
 {
-    ["FontStyles"] =
+    FontStyles =
     {
         "Fonts\\2002.TTF",
         "Fonts\\2002B.TTF",
@@ -26,7 +28,7 @@ AZP.TimedEncounters.dataTables =
         "Fonts\\NIM_____.TTF",
         "Fonts\\SKURRI_CYR.TTF",
     },
-    ["BarStyles"] =
+    BarStyles =
     {
         "Interface\\RaidFrame\\Raid-Bar-Hp-Fill",
         "Interface\\PaperDollInfoFrame\\UI-Character-Skills-Bar",
