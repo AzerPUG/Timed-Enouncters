@@ -270,7 +270,7 @@ function AZP.TimedEncounters:ChangeTimerFrameFonts()
     end
 end
 
-function AZP.TimedEncounters:eventVariablesLoaded()
+function AZP.TimedEncounters.Events:VariablesLoaded()
     AZP.TimedEncounters:CreateAZPTETimerFrame()
     AZP.TimedEncounters:CreateCombatBar()
     AZP.TimedEncounters:PlaceMarkers()
