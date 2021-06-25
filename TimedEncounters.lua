@@ -30,9 +30,7 @@ local EncounterTimeIndex = nil
 local tempFrame
 
 function AZP.TimedEncounters:OnLoadBoth()
-    if AZPTEScale == nil then
-        AZPTEScale = 0.8
-    end
+
 end
 
 function AZP.TimedEncounters:OnLoadCore()
@@ -260,7 +258,7 @@ function AZP.TimedEncounters:SetValue(var, newValue)
     elseif var == "bar" then
         StyleVars.bar = newValue
         AZPTEConfig.bar = newValue
-        barStyleName = string.match(string.match(StylePath, "\\(.*)"), "\\(.*)")
+        barStyleName = string.match(StylePath, ".*\\(.*)")
         UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.BarStyleDropDown, barStyleName)
     end
     BossHPBar:SetStatusBarTexture(StyleVars.bar)
@@ -290,27 +288,28 @@ function AZP.TimedEncounters:ChangeTimerFrameFonts()
 end
 
 function AZP.TimedEncounters.Events:VariablesLoaded()
+    if AZPTEConfig == nil then
+        AZPTEConfig = {
+            ["font"] = "Fonts\\FRIZQT__.TTF",
+            ["bar"] = "Interface\\TargetingFrame\\UI-StatusBar",
+            ["barScale"] = 1,
+        }
+    end
+
     AZP.TimedEncounters:CreateAZPTETimerFrame()
     AZP.TimedEncounters:CreateCombatBar()
     AZP.TimedEncounters:PlaceMarkers()
-    BossHPBar:SetScale(AZPTEScale)
-    AZPTEScaleSlider:SetValue(AZPTEScale)
+    BossHPBar:SetScale(AZPTEConfig.barScale)
+    AZPTEScaleSlider:SetValue(AZPTEConfig.barScale)
     AZP.TimedEncounters:LoadStyle()
 end
 
 function AZP.TimedEncounters:setScale(scale)
-    AZPTEScale = scale
+    AZPTEConfig.barScale = scale
     BossHPBar:SetScale(scale)
 end
 
 function AZP.TimedEncounters:LoadStyle()
-    if AZPTEConfig == nil then
-        AZPTEConfig = {
-            ["font"] = "Fonts\\FRIZQT__.TTF",
-            ["bar"] = "Interface\\TargetingFrame\\UI-StatusBar"
-        }
-    end
-    
     UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.FontStyleDropDown, string.match( AZPTEConfig.font, "\\(.*)"))
     UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.BarStyleDropDown, string.match( AZPTEConfig.bar, ".*\\(.*)"))
 
@@ -370,7 +369,7 @@ function AZP.TimedEncounters:CreateCombatBar()
     BossHPBar:SetReverseFill(true)
     BossHPBar:SetPoint("CENTER", 0, 0)
     BossHPBar:SetStatusBarColor(0, 1, 0)
-    BossHPBar:SetScale(AZPTEScale)
+    BossHPBar:SetScale(AZPTEConfig.barScale)
     BossHPBar.bg = BossHPBar:CreateTexture(nil, "BACKGROUND")
     BossHPBar.bg:SetTexture("Interface\\TARGETINGFRAME\\UI-StatusBar")
     BossHPBar.bg:SetAllPoints(true)
