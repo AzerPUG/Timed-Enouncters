@@ -41,7 +41,7 @@ function AZP.TimedEncounters:OnLoadCore()
 
     AZP.OptionsPanels:RemovePanel("Timed Encounters")
     AZP.OptionsPanels:Generic("Timed Encounters", optionHeader, function(frame)
-        AZPTimedEncountersOptionPanel = frame
+        AZPTimedEncountersOptionsPanel = frame
         AZP.TimedEncounters:FillOptionsPanel(frame)
     end)
 end
@@ -195,9 +195,7 @@ function AZP.TimedEncounters:FillOptionsPanel(frameToFill)
     frameToFill.FontStyleDropDown:SetPoint("TOPLEFT", 350, -200)
 
     UIDropDownMenu_SetWidth(frameToFill.BarStyleDropDown, 150)
-    UIDropDownMenu_SetText(frameToFill.BarStyleDropDown, "UI-StatusBar")
     UIDropDownMenu_SetWidth(frameToFill.FontStyleDropDown, 150)
-    UIDropDownMenu_SetText(frameToFill.FontStyleDropDown, "Fonts\\FRIZQT__.TTF")
 
     local BarStyles = AZP.TimedEncounters.dataTables.BarStyles
     local FontStyles = AZP.TimedEncounters.dataTables.FontStyles
@@ -230,6 +228,7 @@ function AZP.TimedEncounters:SetValue(var, newValue)
     local barStyleName, fontStyleName = nil, nil
     if var == "font" then
         StyleVars.font = newValue
+        AZPTEConfig.font = newValue
         fontStyleName = string.match(StylePath, "\\(.*)")
         UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.FontStyleDropDown, fontStyleName)
         AZP.TimedEncounters:ChangeTimerFrameFonts()
@@ -241,6 +240,7 @@ function AZP.TimedEncounters:SetValue(var, newValue)
         StyleVars.monochrome = newValue
     elseif var == "bar" then
         StyleVars.bar = newValue
+        AZPTEConfig.bar = newValue
         barStyleName = string.match(string.match(StylePath, "\\(.*)"), "\\(.*)")
         UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.BarStyleDropDown, barStyleName)
     end
@@ -274,6 +274,26 @@ function AZP.TimedEncounters.Events:VariablesLoaded()
     AZP.TimedEncounters:CreateAZPTETimerFrame()
     AZP.TimedEncounters:CreateCombatBar()
     AZP.TimedEncounters:PlaceMarkers()
+    AZP.TimedEncounters:LoadStyle()
+end
+
+function AZP.TimedEncounters:LoadStyle()
+    if AZPTEConfig == nil then
+        AZPTEConfig = {
+            ["font"] = "Fonts\\FRIZQT__.TTF",
+            ["bar"] = "UI-StatusBar"
+        }
+    end
+
+    UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.FontStyleDropDown, AZPTEConfig.font)
+    UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.BarStyleDropDown, AZPTEConfig.bar)
+    AZP.TimedEncounters.StyleVars.bar = AZPTEConfig.bar
+    AZP.TimedEncounters.StyleVars.font = AZPTEConfig.font
+
+    BossHPBar:SetStatusBarTexture(AZPTEConfig.bar)
+    BossHPBar.bg:SetTexture(AZPTEConfig.bar)
+
+    AZP.TimedEncounters:ChangeTimerFrameFonts()
 end
 
 function AZP.TimedEncounters.Events:EncounterEnd()
