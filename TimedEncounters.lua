@@ -281,12 +281,13 @@ function AZP.TimedEncounters:LoadStyle()
     if AZPTEConfig == nil then
         AZPTEConfig = {
             ["font"] = "Fonts\\FRIZQT__.TTF",
-            ["bar"] = "UI-StatusBar"
+            ["bar"] = "Interface\\TargetingFrame\\UI-StatusBar"
         }
     end
+    
+    UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.FontStyleDropDown, string.match( AZPTEConfig.font, "\\(.*)"))
+    UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.BarStyleDropDown, string.match( AZPTEConfig.bar, ".*\\(.*)"))
 
-    UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.FontStyleDropDown, AZPTEConfig.font)
-    UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.BarStyleDropDown, AZPTEConfig.bar)
     AZP.TimedEncounters.StyleVars.bar = AZPTEConfig.bar
     AZP.TimedEncounters.StyleVars.font = AZPTEConfig.font
 
