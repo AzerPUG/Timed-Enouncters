@@ -214,6 +214,7 @@ function AZP.TimedEncounters:eventVariablesLoaded()
     AZP.TimedEncounters:CreateCombatBar()
     AZP.TimedEncounters:PlaceMarkers()
     BossHPBar:SetScale(AZPTEScale)
+    AZPTEScaleSlider:SetValue(AZPTEScale)
 end
 
 function AZP.TimedEncounters:setScale(scale)
