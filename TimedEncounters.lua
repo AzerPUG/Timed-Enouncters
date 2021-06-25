@@ -6,13 +6,14 @@
         -- Need extra tracking function for HP based on listed %.
 
 if AZP == nil then AZP = {} end
+if AZP.TimedEncounters == nil then AZP.TimedEncounters = {} end
 if AZP.VersionControl == nil then AZP.VersionControl = {} end
 if AZP.OnLoad == nil then AZP.OnLoad = {} end
 if AZP.OnEvent == nil then AZP.OnEvent = {} end
-if AZP.OnEvent == nil then AZP.OnEvent = {} end
 
-AZP.VersionControl.TimedEncounters = 4
-AZP.TimedEncounters = {}
+AZP.VersionControl["TimedEncounters"] = 6
+if AZP.TimedEncounters == nil then AZP.TimedEncounters = {} end
+if AZP.TimedEncounters.Events == nil then AZP.TimedEncounters.Events = {} end
 
 local AZPTETimerFrame, AZPTECombatBar, UpdateFrame, EventFrame = nil, nil, nil, nil
 local BossHPBar = nil
@@ -37,13 +38,13 @@ end
 function AZP.TimedEncounters:OnLoadCore()
     AZP.TimedEncounters:OnLoadBoth()
 
-    AZP.Core:RegisterEvents("VARIABLES_LOADED", function(...) AZP.TimedEncounters:eventVariablesLoaded(...) end)
-    AZP.Core:RegisterEvents("ENCOUNTER_START", function(...) AZP.TimedEncounters:eventEncounterStart() end)
-    AZP.Core:RegisterEvents("ENCOUNTER_END", function(...) AZP.TimedEncounters:eventEncounterEnd() end)
+    AZP.Core:RegisterEvents("VARIABLES_LOADED", function(...) AZP.TimedEncounters.Events:VariablesLoaded(...) end)
+    AZP.Core:RegisterEvents("ENCOUNTER_START", function(...) AZP.TimedEncounters.Events:EncounterStart() end)
+    AZP.Core:RegisterEvents("ENCOUNTER_END", function(...) AZP.TimedEncounters.Events:EncounterEnd() end)
 
     AZP.OptionsPanels:RemovePanel("Timed Encounters")
     AZP.OptionsPanels:Generic("Timed Encounters", optionHeader, function(frame)
-        AZPTimedEncountersOptionPanel = frame
+        AZPTimedEncountersOptionsPanel = frame
         AZP.TimedEncounters:FillOptionsPanel(frame)
     end)
 end
@@ -110,16 +111,16 @@ end
 
 function AZP.TimedEncounters:FillOptionsPanel(frameToFill)
     local headerFrame = CreateFrame("Frame", nil, frameToFill)
-    headerFrame:SetSize(200, 25)
+    headerFrame:SetSize(200, 50)
     headerFrame:SetPoint("LEFT", 75, 200)
     headerFrame.time = headerFrame:CreateFontString("headerFrame", "ARTWORK", "GameFontNormalLarge")
-    headerFrame.time:SetSize(100, 25)
+    headerFrame.time:SetSize(100, 50)
     headerFrame.time:SetPoint("LEFT", 50, 0)
-    headerFrame.time:SetText("Time Marker:")
+    headerFrame.time:SetText("Time\nin Sec:")
     headerFrame.health = headerFrame:CreateFontString("headerFrame", "ARTWORK", "GameFontNormalLarge")
-    headerFrame.health:SetSize(100, 25)
+    headerFrame.health:SetSize(100, 50)
     headerFrame.health:SetPoint("LEFT", 175, 0)
-    headerFrame.health:SetText("Health Marker:")
+    headerFrame.health:SetText("Health\nin %:")
     for i = 1, 10 do
         EncounterTrackingData[i] = {}
         local counterFrame = CreateFrame("Frame", nil, frameToFill)
@@ -148,7 +149,7 @@ function AZP.TimedEncounters:FillOptionsPanel(frameToFill)
     local AZPTEToggleMoveButton = CreateFrame("Button", nil, frameToFill, "UIPanelButtonTemplate")
     AZPTEToggleMoveButton:SetText("Toggle Movement!")
     AZPTEToggleMoveButton:SetSize(100, 25)
-    AZPTEToggleMoveButton:SetPoint("TOP", 100, -100)
+    AZPTEToggleMoveButton:SetPoint("TOPLEFT", 375, -100)
     AZPTEToggleMoveButton:SetScript("OnClick",
     function()
         if moveable == false then
@@ -207,14 +208,94 @@ function AZP.TimedEncounters:FillOptionsPanel(frameToFill)
     AZPTEScaleSlider:SetValueStep(0.1)
 
     AZPTEScaleSlider:SetScript("OnValueChanged", AZP.TimedEncounters.setScale)
+    frameToFill.BarStyleDropDown = CreateFrame("Button", nil, frameToFill, "UIDropDownMenuTemplate")
+    frameToFill.BarStyleDropDown:SetPoint("TOPLEFT", 350, -150)
+    frameToFill.FontStyleDropDown = CreateFrame("Button", nil, frameToFill, "UIDropDownMenuTemplate")
+    frameToFill.FontStyleDropDown:SetPoint("TOPLEFT", 350, -200)
+
+    UIDropDownMenu_SetWidth(frameToFill.BarStyleDropDown, 150)
+    UIDropDownMenu_SetWidth(frameToFill.FontStyleDropDown, 150)
+
+    local BarStyles = AZP.TimedEncounters.dataTables.BarStyles
+    local FontStyles = AZP.TimedEncounters.dataTables.FontStyles
+    local StyleVars = AZP.TimedEncounters.StyleVars
+    UIDropDownMenu_Initialize(frameToFill.BarStyleDropDown, function(self, level, menuList)
+        local info = UIDropDownMenu_CreateInfo()
+        info.func = AZP.TimedEncounters.SetValue
+        for i = 1, #BarStyles do
+            info.text = string.match(string.match(BarStyles[i], "\\(.*)"), "\\(.*)")
+            info.arg1 = "bar"
+            info.arg2 = BarStyles[i]
+            UIDropDownMenu_AddButton(info, 1)
+        end
+    end)
+    UIDropDownMenu_Initialize(frameToFill.FontStyleDropDown, function(self, level, menuList)
+        local info = UIDropDownMenu_CreateInfo()
+        info.func = AZP.TimedEncounters.SetValue
+        for i = 1, #FontStyles do
+            info.text = string.match(FontStyles[i], "\\(.*)")
+            info.arg1 = "font"
+            info.arg2 = FontStyles[i]
+            UIDropDownMenu_AddButton(info, 1)
+        end
+    end)
 end
 
-function AZP.TimedEncounters:eventVariablesLoaded()
+function AZP.TimedEncounters:SetValue(var, newValue)
+    local StyleVars = AZP.TimedEncounters.StyleVars
+    local StylePath = newValue
+    local barStyleName, fontStyleName = nil, nil
+    if var == "font" then
+        StyleVars.font = newValue
+        AZPTEConfig.font = newValue
+        fontStyleName = string.match(StylePath, "\\(.*)")
+        UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.FontStyleDropDown, fontStyleName)
+        AZP.TimedEncounters:ChangeTimerFrameFonts()
+    elseif var == "size" then
+        StyleVars.size = newValue
+    elseif var == "outline" then
+        StyleVars.outline = newValue
+    elseif var == "monochrome" then
+        StyleVars.monochrome = newValue
+    elseif var == "bar" then
+        StyleVars.bar = newValue
+        AZPTEConfig.bar = newValue
+        barStyleName = string.match(string.match(StylePath, "\\(.*)"), "\\(.*)")
+        UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.BarStyleDropDown, barStyleName)
+    end
+    BossHPBar:SetStatusBarTexture(StyleVars.bar)
+    BossHPBar.bg:SetTexture(StyleVars.bar)
+    CloseDropDownMenus()
+end
+
+function AZP.TimedEncounters:ChangeTimerFrameFonts()
+    local StyleVars = AZP.TimedEncounters.StyleVars
+    local OutlineAndMonochrome = nil
+    if StyleVars.outline ~= nil and StyleVars.monochrome ~= nil then OutlineAndMonochrome = StyleVars.outline .. ", " .. StyleVars.monochrome
+    elseif StyleVars.outline ~= nil and StyleVars.monochrome == nil then OutlineAndMonochrome = StyleVars.outline
+    elseif StyleVars.outline == nil and StyleVars.monochrome ~= nil then OutlineAndMonochrome = StyleVars.monochrome
+    end
+    AZPTETimerFrame.header:SetFont(StyleVars.font, 20, OutlineAndMonochrome)
+    AZPTETimerFrame.text:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
+    AZPTETimerFrame.Plan.Header:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
+    AZPTETimerFrame.HPActual.Header:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
+    AZPTETimerFrame.CurrentTimer.Header:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
+    AZPTETimerFrame.Difference.Header:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
+    for i = 1, #EncounterTrackingData do
+        AZPTETimerFrame.Plan[i]:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
+        AZPTETimerFrame.HPActual[i]:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
+        AZPTETimerFrame.CurrentTimer[i]:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
+        AZPTETimerFrame.Difference[i]:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
+    end
+end
+
+function AZP.TimedEncounters.Events:VariablesLoaded()
     AZP.TimedEncounters:CreateAZPTETimerFrame()
     AZP.TimedEncounters:CreateCombatBar()
     AZP.TimedEncounters:PlaceMarkers()
     BossHPBar:SetScale(AZPTEScale)
     AZPTEScaleSlider:SetValue(AZPTEScale)
+    AZP.TimedEncounters:LoadStyle()
 end
 
 function AZP.TimedEncounters:setScale(scale)
@@ -222,7 +303,27 @@ function AZP.TimedEncounters:setScale(scale)
     BossHPBar:SetScale(scale)
 end
 
-function AZP.TimedEncounters:eventEncounterEnd()
+function AZP.TimedEncounters:LoadStyle()
+    if AZPTEConfig == nil then
+        AZPTEConfig = {
+            ["font"] = "Fonts\\FRIZQT__.TTF",
+            ["bar"] = "Interface\\TargetingFrame\\UI-StatusBar"
+        }
+    end
+    
+    UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.FontStyleDropDown, string.match( AZPTEConfig.font, "\\(.*)"))
+    UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.BarStyleDropDown, string.match( AZPTEConfig.bar, ".*\\(.*)"))
+
+    AZP.TimedEncounters.StyleVars.bar = AZPTEConfig.bar
+    AZP.TimedEncounters.StyleVars.font = AZPTEConfig.font
+
+    BossHPBar:SetStatusBarTexture(AZPTEConfig.bar)
+    BossHPBar.bg:SetTexture(AZPTEConfig.bar)
+
+    AZP.TimedEncounters:ChangeTimerFrameFonts()
+end
+
+function AZP.TimedEncounters.Events:EncounterEnd()
     EncounterTimer:Cancel()
     AZPTECombatBar:Hide()
     AZP.TimedEncounters:SendToRaidChat()
@@ -243,7 +344,7 @@ function AZP.TimedEncounters:SendToRaidChat()
     end
 end
 
-function AZP.TimedEncounters:eventEncounterStart()
+function AZP.TimedEncounters.Events:EncounterStart()
     AZP.TimedEncounters:ResetResults()
     AZPTECombatBar:Show()
     EncounterTimeIndex = 0
@@ -526,11 +627,11 @@ end
 
 function AZP.TimedEncounters:OnEvent(event, ...)
     if event == "ENCOUNTER_START" then
-        AZP.TimedEncounters:eventEncounterStart()
+        AZP.TimedEncounters.Events:EncounterStart()
     elseif event == "ENCOUNTER_END" then
-        AZP.TimedEncounters:eventEncounterEnd()
+        AZP.TimedEncounters.Events:EncounterEnd()
     elseif event == "VARIABLES_LOADED" then
-        AZP.TimedEncounters:eventVariablesLoaded()
+        AZP.TimedEncounters.Events:VariablesLoaded()
     end
 end
 

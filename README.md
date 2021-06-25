@@ -1,19 +1,33 @@
 # AzerPUG Links
 [![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/Website%20Panel%20Small.png "")](http://www.azerpug.com "") 
-[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/Discord%20Panel%20Small.png "")](http://www.azerpug.com/discord "")  
-[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/Twitch%20Panel%20Small.png "")](http://www.twitch.tv/AzerPUG "") 
-[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/YouTube%20Panel%20Small.png "")](https://www.youtube.com/channel/UClMRIcLGE_0SODpOrP8AVlQ "")  
-[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/CurseForge%20Panel%20Small.png "")](https://www.curseforge.com/members/azerpug/projects "") 
-[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/GitHub%20Panel%20Small.png "")](https://github.com/AzerPUG "")  
-[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/Merch%20Panel%20Small.png "")](https://shop.spreadshirt.net/azerpug/ "") 
-[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/Fiverr%20Panel%20Small.png "")](https://www.fiverr.com/arcodielhof "")  
-[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/Instagram%20Panel%20Small.png "")](https://www.instagram.com/azerpug/ "") 
-[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/Twitter%20Panel%20Small.png "")](https://twitter.com/azerpug "")  
-[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/Patreon%20Panel%20Small.png "")](https://www.patreon.com/AzerPUG "") 
-[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/PayPal%20Panel%20Small.png "")](https://www.paypal.com/donate?hosted_button_id=V4M8A5PPJWZLE "")
+[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/Discord%20Panel%20Small.png "")](http://www.azerpug.com/discord "") 
+[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/Twitch%20Panel%20Small.png "")](http://www.azerpug.com/twitch "")  
+
+[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/CurseForge%20Panel%20Small.png "")](http://www.azerpug.com/curseforge "") 
+[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/GitHub%20Panel%20Small.png "")](http://www.azerpug.com/github "") 
+[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/Fiverr%20Panel%20Small.png "")](http://www.azerpug.com/fiverr "")  
+
+[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/Merch%20Panel%20Small.png "")](http://www.azerpug.com/merch "") 
+[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/Patreon%20Panel%20Small.png "")](http://www.azerpug.com/patreon "") 
+[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/PayPal%20Panel%20Small.png "")](http://www.azerpug.com/paypal "")  
+
+[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/YouTube%20Panel%20Small.png "")](http://www.azerpug.com/youtube "") 
+[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/Twitter%20Panel%20Small.png "")](http://www.azerpug.com/twitter "") 
+[![](https://github.com/AzerPUG/AZP-Files/raw/main/Panels/Instagram%20Panel%20Small.png "")](http://www.azerpug.com/instagram "") 
 
 # Description and Features
 ***Description and Features Here*** 
+
+# Optional Core
+All AzerPUG AddOns are stand-alone and as lightweight as possible.  
+However, some very resource intensive things with AddOns are really nice to have.  
+In order to provide these extra things, like optimization or combining the AddOns into one bigger one, we have an optinal, combined AddOn.  
+Anyone who uses several of our AddOns, is strongly suggested to use the [AzerPUG's Core](https://www.curseforge.com/wow/addons/azerpugs-core) as well.  
+This Core AddOn will do several things that are considered an imporvement by most people:
+- Speed up loading times
+- Register events more efficiently.
+- Deal with all the event handling for all AzerPUG AddOns.
+- Deal with all the version control for all AzerPUG AddOns.  
 
 # Bugs, Errors, Glitches and Requests.
 If you find any of the above, please do not hesitate to create a GitHub Issue here: ***GitHub Issues Link Here***  
