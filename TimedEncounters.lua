@@ -283,6 +283,7 @@ function AZP.TimedEncounters.Events:EncounterEnd()
 end
 
 function AZP.TimedEncounters.Events:EncounterStart()
+    AZPTETimerFrame.sendResultsToRaidButton:Show()
     AZP.TimedEncounters:ResetResults()
     AZPTECombatBar:Show()
     EncounterTimeIndex = 0
@@ -473,6 +474,15 @@ function AZP.TimedEncounters:CreateAZPTETimerFrame()
     tempButton.text:SetText("ShowFrame")
     tempButton.text:SetSize(75, 25)
     tempButton.text:SetPoint("CENTER", 0, 0)
+
+    AZPTETimerFrame.sendResultsToRaidButton = CreateFrame("Button", nil, AZPTETimerFrame, "UIPanelButtonTemplate")
+    AZPTETimerFrame.sendResultsToRaidButton:SetPoint("BOTTOMRIGHT", -10, 10)
+    AZPTETimerFrame.sendResultsToRaidButton:SetSize(75, 25)
+    AZPTETimerFrame.sendResultsToRaidButton:SetScript("OnClick", function()
+        print("Me <3 Tex")
+        AZP.TimedEncounters:ShareResults()
+    end)
+    AZPTETimerFrame.sendResultsToRaidButton:SetText("Share with Raid!")    
 end
 
 function AZP.TimedEncounters:PullNumbersFromEditBox(index)
@@ -519,17 +529,14 @@ function AZP.TimedEncounters:UpdateHealth(i, curPercentHealth)
     AZPTECombatBar.checkPoints.HPs[i]:SetText(AZPTESavedList[i][2] .. "%\n" .. percentageDifference .. "")
 end
 
-function AZP.TimedEncounters:DisplayResults()
-    local setText = "Tracked Data:\n"
-    AZPTETimerFrame.text:SetText(setText)
+function AZP.TimedEncounters:ShareResults()
     for i = 1, #EncounterTrackingData do
         if EncounterTrackingData[i][1] == nil or EncounterTrackingData[i][2] == nil then
             break
         else
-            setText = setText .. EncounterTrackingData[i][2] .. "% at " .. AZPTESavedList[i][1] .. "s.\n"
+            SendChatMessage(EncounterTrackingData[i][2] .. "% at " .. AZPTESavedList[i][1])
         end
     end
-    AZPTETimerFrame.text:SetText(setText)
 end
 
 function AZP.TimedEncounters:ResetResults()
@@ -541,6 +548,8 @@ function AZP.TimedEncounters:ResetResults()
         AZPTETimerFrame.CurrentTimer[i]:SetText("")
         AZPTETimerFrame.Difference[i]:SetText("")
     end
+    AZPTETimerFrame.sendResultsToRaidButton:Hide()
+    
 end
 
 function AZP.TimedEncounters:Ticker()
