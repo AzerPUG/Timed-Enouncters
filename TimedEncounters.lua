@@ -21,6 +21,7 @@ local AZPTimedEncountersOptionsPanel
 local HaveShowedUpdateNotification = false
 EncounterTrackingData = {}
 local EcounterTrackingEditBoxes = {}
+local endOfCombatPost = {}
 
 local moveable = false
 local EncounterTimer = nil
@@ -41,7 +42,7 @@ function AZP.TimedEncounters:OnLoadCore()
 
     AZP.OptionsPanels:RemovePanel("Timed Encounters")
     AZP.OptionsPanels:Generic("Timed Encounters", optionHeader, function(frame)
-        AZPTimedEncountersOptionPanel = frame
+        AZPTimedEncountersOptionsPanel = frame
         AZP.TimedEncounters:FillOptionsPanel(frame)
     end)
 end
@@ -189,15 +190,29 @@ function AZP.TimedEncounters:FillOptionsPanel(frameToFill)
         end
     end)
 
+    local AZPTEScaleSlider = CreateFrame("SLIDER", "AZPTEScaleSlider", frameToFill, "OptionsSliderTemplate")
+    AZPTEScaleSlider:SetHeight(20)
+    AZPTEScaleSlider:SetWidth(100)
+    AZPTEScaleSlider:SetOrientation('HORIZONTAL')
+    AZPTEScaleSlider:SetPoint("TOP", 150, -300)
+    AZPTEScaleSlider:EnableMouse(true)
+    AZPTEScaleSlider.tooltipText = 'Scale BossBar'
+    AZPTEScaleSliderLow:SetText('small')
+    AZPTEScaleSliderHigh:SetText('big')
+    AZPTEScaleSliderText:SetText('BossBar Scale')
+
+    AZPTEScaleSlider:Show()
+    AZPTEScaleSlider:SetMinMaxValues(0.5, 2)
+    AZPTEScaleSlider:SetValueStep(0.1)
+
+    AZPTEScaleSlider:SetScript("OnValueChanged", AZP.TimedEncounters.setScale)
     frameToFill.BarStyleDropDown = CreateFrame("Button", nil, frameToFill, "UIDropDownMenuTemplate")
     frameToFill.BarStyleDropDown:SetPoint("TOPLEFT", 350, -150)
     frameToFill.FontStyleDropDown = CreateFrame("Button", nil, frameToFill, "UIDropDownMenuTemplate")
     frameToFill.FontStyleDropDown:SetPoint("TOPLEFT", 350, -200)
 
     UIDropDownMenu_SetWidth(frameToFill.BarStyleDropDown, 150)
-    UIDropDownMenu_SetText(frameToFill.BarStyleDropDown, "UI-StatusBar")
     UIDropDownMenu_SetWidth(frameToFill.FontStyleDropDown, 150)
-    UIDropDownMenu_SetText(frameToFill.FontStyleDropDown, "Fonts\\FRIZQT__.TTF")
 
     local BarStyles = AZP.TimedEncounters.dataTables.BarStyles
     local FontStyles = AZP.TimedEncounters.dataTables.FontStyles
@@ -230,6 +245,7 @@ function AZP.TimedEncounters:SetValue(var, newValue)
     local barStyleName, fontStyleName = nil, nil
     if var == "font" then
         StyleVars.font = newValue
+        AZPTEConfig.font = newValue
         fontStyleName = string.match(StylePath, "\\(.*)")
         UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.FontStyleDropDown, fontStyleName)
         AZP.TimedEncounters:ChangeTimerFrameFonts()
@@ -241,7 +257,8 @@ function AZP.TimedEncounters:SetValue(var, newValue)
         StyleVars.monochrome = newValue
     elseif var == "bar" then
         StyleVars.bar = newValue
-        barStyleName = string.match(string.match(StylePath, "\\(.*)"), "\\(.*)")
+        AZPTEConfig.bar = newValue
+        barStyleName = string.match(StylePath, ".*\\(.*)")
         UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.BarStyleDropDown, barStyleName)
     end
     BossHPBar:SetStatusBarTexture(StyleVars.bar)
@@ -271,15 +288,59 @@ function AZP.TimedEncounters:ChangeTimerFrameFonts()
 end
 
 function AZP.TimedEncounters.Events:VariablesLoaded()
+    if AZPTEConfig == nil then
+        AZPTEConfig = {
+            ["font"] = "Fonts\\FRIZQT__.TTF",
+            ["bar"] = "Interface\\TargetingFrame\\UI-StatusBar",
+            ["barScale"] = 1,
+        }
+    end
+
     AZP.TimedEncounters:CreateAZPTETimerFrame()
     AZP.TimedEncounters:CreateCombatBar()
     AZP.TimedEncounters:PlaceMarkers()
+    BossHPBar:SetScale(AZPTEConfig.barScale)
+    AZPTEScaleSlider:SetValue(AZPTEConfig.barScale)
+    AZP.TimedEncounters:LoadStyle()
+end
+
+function AZP.TimedEncounters:setScale(scale)
+    AZPTEConfig.barScale = scale
+    BossHPBar:SetScale(scale)
+end
+
+function AZP.TimedEncounters:LoadStyle()
+    UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.FontStyleDropDown, string.match( AZPTEConfig.font, "\\(.*)"))
+    UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.BarStyleDropDown, string.match( AZPTEConfig.bar, ".*\\(.*)"))
+
+    AZP.TimedEncounters.StyleVars.bar = AZPTEConfig.bar
+    AZP.TimedEncounters.StyleVars.font = AZPTEConfig.font
+
+    BossHPBar:SetStatusBarTexture(AZPTEConfig.bar)
+    BossHPBar.bg:SetTexture(AZPTEConfig.bar)
+
+    AZP.TimedEncounters:ChangeTimerFrameFonts()
 end
 
 function AZP.TimedEncounters.Events:EncounterEnd()
     EncounterTimer:Cancel()
     AZPTECombatBar:Hide()
+    AZP.TimedEncounters:SendToRaidChat()
     AZPTETimerFrame:Show()
+
+    -- Reset AddOn to start.
+end
+
+function AZP.TimedEncounters:SendToRaidChat()
+    --SendChatMessage("AzerPUG's Timed Encounters Post-Combat Data:", "RAID")
+    SendChatMessage("AzerPUG's Timed Encounters Post-Combat Data:", "WHISPER", nil, "Tex-Ravencrest")
+    for i = 1, 10 do
+        if EncounterTrackingData[i] ~= nil then
+            local raidMessage = "Boss was at " .. EncounterTrackingData[i][2] .. "% at " .. AZPTESavedList[i][1] .. " seconds into the fight!"
+            --SendChatMessage(raidMessage, "RAID")
+            SendChatMessage(raidMessage, "WHISPER", nil, "Tex-Ravencrest")
+        end
+    end
 end
 
 function AZP.TimedEncounters.Events:EncounterStart()
@@ -308,6 +369,7 @@ function AZP.TimedEncounters:CreateCombatBar()
     BossHPBar:SetReverseFill(true)
     BossHPBar:SetPoint("CENTER", 0, 0)
     BossHPBar:SetStatusBarColor(0, 1, 0)
+    BossHPBar:SetScale(AZPTEConfig.barScale)
     BossHPBar.bg = BossHPBar:CreateTexture(nil, "BACKGROUND")
     BossHPBar.bg:SetTexture("Interface\\TARGETINGFRAME\\UI-StatusBar")
     BossHPBar.bg:SetAllPoints(true)
@@ -583,3 +645,7 @@ SlashCmdList['TE'] =
             AZPTETimerFrame:Show()
         end
     end
+
+
+
+    -- Reset Bar on EncounterStart!
