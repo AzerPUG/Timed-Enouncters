@@ -1,17 +1,10 @@
--- TODO
-    -- Remember location CombatFrame
-    -- Remember Hide/Show TEFrame
-    -- Remember Hide/Show CombatFrame
-    -- Add TimeDifference on  HP% Reached.
-        -- Need extra tracking function for HP based on listed %.
-
 if AZP == nil then AZP = {} end
 if AZP.TimedEncounters == nil then AZP.TimedEncounters = {} end
 if AZP.VersionControl == nil then AZP.VersionControl = {} end
 if AZP.OnLoad == nil then AZP.OnLoad = {} end
 if AZP.OnEvent == nil then AZP.OnEvent = {} end
 
-AZP.VersionControl["TimedEncounters"] = 8
+AZP.VersionControl["TimedEncounters"] = 9
 if AZP.TimedEncounters == nil then AZP.TimedEncounters = {} end
 if AZP.TimedEncounters.Events == nil then AZP.TimedEncounters.Events = {} end
 
