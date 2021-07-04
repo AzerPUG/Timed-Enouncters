@@ -399,7 +399,7 @@ function AZP.TimedEncounters:CreateCombatBar()
         AZPTECombatBar.checkPoints.HPs[i]:SetText("HP+Diff", i)
     end
 
-    --AZPTECombatBar:Hide()
+    AZPTECombatBar:Hide()
 end
 
 function AZP.TimedEncounters:PlaceMarkers()
