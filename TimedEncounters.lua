@@ -506,7 +506,9 @@ function AZP.TimedEncounters:CreateAZPTETimerFrame(InputFrame)
         InputFrame.Difference[i]:SetPoint("TOP", 125, -20 * i - 40)
     end
 
-    AZPTETimerFrame = AZP.Core.AddOns.TE.MainFrame
+    if IsAddOnLoaded("AzerPUGsCore") then
+        AZPTETimerFrame = AZP.Core.AddOns.TE.MainFrame
+    end
 
     VarsAndAddOnLoaded[2] = true
     AZP.TimedEncounters:VarsAndAddOnLoaded()
