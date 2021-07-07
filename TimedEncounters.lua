@@ -4,7 +4,7 @@ if AZP.VersionControl == nil then AZP.VersionControl = {} end
 if AZP.OnLoad == nil then AZP.OnLoad = {} end
 if AZP.OnEvent == nil then AZP.OnEvent = {} end
 
-AZP.VersionControl["TimedEncounters"] = 9
+AZP.VersionControl["Timed Encounters"] = 10
 if AZP.TimedEncounters == nil then AZP.TimedEncounters = {} end
 if AZP.TimedEncounters.Events == nil then AZP.TimedEncounters.Events = {} end
 
@@ -12,7 +12,7 @@ local AZPTETimerFrame, AZPTECombatBar, UpdateFrame, EventFrame = nil, nil, nil, 
 local BossHPBar = nil
 local AZPTimedEncountersOptionsPanel
 local HaveShowedUpdateNotification = false
-EncounterTrackingData = {}
+local EncounterTrackingData = {}
 local EcounterTrackingEditBoxes = {}
 local endOfCombatPost = {}
 
@@ -20,15 +20,14 @@ local moveable = false
 local EncounterTimer = nil
 local EncounterTimeIndex = nil
 
+local VarsAndAddOnLoaded = {false, false}
+
 local tempFrame
 
 function AZP.TimedEncounters:OnLoadBoth()
-
 end
 
 function AZP.TimedEncounters:OnLoadCore()
-    AZP.TimedEncounters:OnLoadBoth()
-
     AZP.Core:RegisterEvents("VARIABLES_LOADED", function(...) AZP.TimedEncounters.Events:VariablesLoaded(...) end)
     AZP.Core:RegisterEvents("ENCOUNTER_START", function(...) AZP.TimedEncounters.Events:EncounterStart() end)
     AZP.Core:RegisterEvents("ENCOUNTER_END", function(...) AZP.TimedEncounters.Events:EncounterEnd() end)
@@ -38,6 +37,12 @@ function AZP.TimedEncounters:OnLoadCore()
         AZPTimedEncountersOptionsPanel = frame
         AZP.TimedEncounters:FillOptionsPanel(frame)
     end)
+
+    DevTools_Dump(AZP.Core.AddOns.TE.MainFrame)
+
+    AZP.TimedEncounters:CreateAZPTETimerFrame(AZP.Core.AddOns.TE.MainFrame)
+
+    AZP.TimedEncounters:OnLoadBoth()
 end
 
 function AZP.TimedEncounters:OnLoadSelf()
@@ -97,6 +102,21 @@ function AZP.TimedEncounters:OnLoadSelf()
 
     AZP.TimedEncounters:FillOptionsPanel(AZPTimedEncountersOptionsPanel)
 
+    AZPTETimerFrame = CreateFrame("FRAME", nil, UIParent, "BackdropTemplate")
+    AZPTETimerFrame:SetSize(350, 275)
+    if TEFrameLocation ~= nil then
+        AZPTETimerFrame:SetPoint(TEFrameLocation[1], TEFrameLocation[2], TEFrameLocation[3])
+    else
+        AZPTETimerFrame:SetPoint("CENTER", -750, 0)
+    end
+    AZPTETimerFrame:SetBackdrop({
+        bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+        edgeSize = 12,
+        insets = { left = 1, right = 1, top = 1, bottom = 1 },
+    })
+    AZPTETimerFrame:SetBackdropColor(0.25, 0.25, 0.25, 0.80)
+    AZP.TimedEncounters:CreateAZPTETimerFrame(AZPTETimerFrame)
     AZP.TimedEncounters:OnLoadBoth()
 end
 
@@ -241,7 +261,7 @@ function AZP.TimedEncounters:SetValue(var, newValue)
         AZPTEConfig.font = newValue
         fontStyleName = string.match(StylePath, "\\(.*)")
         UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.FontStyleDropDown, fontStyleName)
-        AZP.TimedEncounters:ChangeTimerFrameFonts()
+        AZP.TimedEncounters:ChangeTimerFrameFonts(AZPTETimerFrame)
     elseif var == "size" then
         StyleVars.size = newValue
     elseif var == "outline" then
@@ -259,42 +279,49 @@ function AZP.TimedEncounters:SetValue(var, newValue)
     CloseDropDownMenus()
 end
 
-function AZP.TimedEncounters:ChangeTimerFrameFonts()
+function AZP.TimedEncounters:ChangeTimerFrameFonts(InputFrame)
     local StyleVars = AZP.TimedEncounters.StyleVars
     local OutlineAndMonochrome = nil
     if StyleVars.outline ~= nil and StyleVars.monochrome ~= nil then OutlineAndMonochrome = StyleVars.outline .. ", " .. StyleVars.monochrome
     elseif StyleVars.outline ~= nil and StyleVars.monochrome == nil then OutlineAndMonochrome = StyleVars.outline
     elseif StyleVars.outline == nil and StyleVars.monochrome ~= nil then OutlineAndMonochrome = StyleVars.monochrome
     end
-    AZPTETimerFrame.header:SetFont(StyleVars.font, 20, OutlineAndMonochrome)
-    AZPTETimerFrame.text:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
-    AZPTETimerFrame.Plan.Header:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
-    AZPTETimerFrame.HPActual.Header:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
-    AZPTETimerFrame.CurrentTimer.Header:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
-    AZPTETimerFrame.Difference.Header:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
+    StyleVars.size = 12
+    InputFrame.header:SetFont(StyleVars.font, 20, OutlineAndMonochrome)
+    InputFrame.text:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
+    InputFrame.Plan.Header:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
+    InputFrame.HPActual.Header:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
+    InputFrame.CurrentTimer.Header:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
+    InputFrame.Difference.Header:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
     for i = 1, #EncounterTrackingData do
-        AZPTETimerFrame.Plan[i]:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
-        AZPTETimerFrame.HPActual[i]:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
-        AZPTETimerFrame.CurrentTimer[i]:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
-        AZPTETimerFrame.Difference[i]:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
+        InputFrame.Plan[i]:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
+        InputFrame.HPActual[i]:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
+        InputFrame.CurrentTimer[i]:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
+        InputFrame.Difference[i]:SetFont(StyleVars.font, StyleVars.size, OutlineAndMonochrome)
     end
 end
 
 function AZP.TimedEncounters.Events:VariablesLoaded()
-    if AZPTEConfig == nil then
-        AZPTEConfig = {
-            ["font"] = "Fonts\\FRIZQT__.TTF",
-            ["bar"] = "Interface\\TargetingFrame\\UI-StatusBar",
-            ["barScale"] = 1,
-        }
-    end
+    VarsAndAddOnLoaded[1] = true
+    AZP.TimedEncounters:VarsAndAddOnLoaded()
+end
 
-    AZP.TimedEncounters:CreateAZPTETimerFrame()
-    AZP.TimedEncounters:CreateCombatBar()
-    AZP.TimedEncounters:PlaceMarkers()
-    BossHPBar:SetScale(AZPTEConfig.barScale)
-    AZPTEScaleSlider:SetValue(AZPTEConfig.barScale)
-    AZP.TimedEncounters:LoadStyle()
+function AZP.TimedEncounters:VarsAndAddOnLoaded()
+    if VarsAndAddOnLoaded[1] == true and VarsAndAddOnLoaded[2] == true then
+        if AZPTEConfig == nil then
+            AZPTEConfig = {
+                ["font"] = "Fonts\\FRIZQT__.TTF",
+                ["bar"] = "Interface\\TargetingFrame\\UI-StatusBar",
+                ["barScale"] = 1,
+            }
+        end
+
+        AZP.TimedEncounters:CreateCombatBar()
+        AZP.TimedEncounters:PlaceMarkers()
+        BossHPBar:SetScale(AZPTEConfig.barScale)
+        AZPTEScaleSlider:SetValue(AZPTEConfig.barScale)
+        AZP.TimedEncounters:LoadStyle(AZPTETimerFrame)
+    end
 end
 
 function AZP.TimedEncounters:setScale(scale)
@@ -303,8 +330,8 @@ function AZP.TimedEncounters:setScale(scale)
 end
 
 function AZP.TimedEncounters:LoadStyle()
-    UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.FontStyleDropDown, string.match( AZPTEConfig.font, "\\(.*)"))
-    UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.BarStyleDropDown, string.match( AZPTEConfig.bar, ".*\\(.*)"))
+    UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.FontStyleDropDown, string.match(AZPTEConfig.font, "\\(.*)"))
+    UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.BarStyleDropDown, string.match(AZPTEConfig.bar, ".*\\(.*)"))
 
     AZP.TimedEncounters.StyleVars.bar = AZPTEConfig.bar
     AZP.TimedEncounters.StyleVars.font = AZPTEConfig.font
@@ -312,7 +339,7 @@ function AZP.TimedEncounters:LoadStyle()
     BossHPBar:SetStatusBarTexture(AZPTEConfig.bar)
     BossHPBar.bg:SetTexture(AZPTEConfig.bar)
 
-    AZP.TimedEncounters:ChangeTimerFrameFonts()
+    AZP.TimedEncounters:ChangeTimerFrameFonts(AZPTETimerFrame)
 end
 
 function AZP.TimedEncounters.Events:EncounterEnd()
@@ -326,7 +353,7 @@ end
 
 function AZP.TimedEncounters:SendToRaidChat()
     --SendChatMessage("AzerPUG's Timed Encounters Post-Combat Data:", "RAID")
-    SendChatMessage("AzerPUG's Timed Encounters Post-Combat Data:", "WHISPER", nil, "Tex-Ravencrest")
+    --SendChatMessage("AzerPUG's Timed Encounters Post-Combat Data:", "WHISPER", nil, "Tex-Ravencrest")
     for i = 1, 10 do
         if EncounterTrackingData[i] ~= nil then
             local raidMessage = "Boss was at " .. EncounterTrackingData[i][2] .. "% at " .. AZPTESavedList[i][1] .. " seconds into the fight!"
@@ -408,7 +435,7 @@ function AZP.TimedEncounters:PlaceMarkers()
     end
 end
 
-function AZP.TimedEncounters:CreateAZPTETimerFrame()
+function AZP.TimedEncounters:CreateAZPTETimerFrame(InputFrame)
     if AZPTESavedList == nil then
         AZPTESavedList = {}
     end
@@ -425,109 +452,64 @@ function AZP.TimedEncounters:CreateAZPTETimerFrame()
         end
     end
 
-    AZPTETimerFrame = CreateFrame("FRAME", nil, UIParent, "BackdropTemplate")
-    AZPTETimerFrame:SetSize(350, 275)
-    if TEFrameLocation ~= nil then
-        AZPTETimerFrame:SetPoint(TEFrameLocation[1], TEFrameLocation[2], TEFrameLocation[3])
-    else
-        AZPTETimerFrame:SetPoint("CENTER", -750, 0)
-    end
-    AZPTETimerFrame:SetBackdrop({
-        bgFile = "Interface/Tooltips/UI-Tooltip-Background",
-        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-        edgeSize = 12,
-        insets = { left = 1, right = 1, top = 1, bottom = 1 },
-    })
-    AZPTETimerFrame:SetBackdropColor(0.25, 0.25, 0.25, 0.80)
-    AZPTETimerFrame.header = AZPTETimerFrame:CreateFontString("AZPTETimerFrame", "ARTWORK", "GameFontNormalHuge")
-    AZPTETimerFrame.header:SetPoint("TOP", 0, -10)
-    AZPTETimerFrame.header:SetText("|cFF00FFFFAzerPUG's Timed Encounters!|r")
-    AZPTETimerFrame.text = AZPTETimerFrame:CreateFontString("AZPTETimerFrame", "ARTWORK", "GameFontNormalLarge")
-    AZPTETimerFrame.text:SetPoint("TOP", 0, -30)
-    AZPTETimerFrame:SetScript("OnDragStart", AZPTETimerFrame.StartMoving)
-    AZPTETimerFrame:SetScript("OnDragStop", AZPTETimerFrame.StopMovingOrSizing)
+    InputFrame.header = InputFrame:CreateFontString("InputFrame", "ARTWORK", "GameFontNormalHuge")
+    InputFrame.header:SetPoint("TOP", 0, -10)
+    InputFrame.header:SetText("|cFF00FFFFAzerPUG's Timed Encounters|r")
+    InputFrame.text = InputFrame:CreateFontString("InputFrame", "ARTWORK", "GameFontNormalLarge")
+    InputFrame.text:SetPoint("TOP", 0, -30)
+    InputFrame:SetScript("OnDragStart", InputFrame.StartMoving)
+    InputFrame:SetScript("OnDragStop", InputFrame.StopMovingOrSizing)
 
-    local AZPTETimerFrameCloseButton = CreateFrame("Button", nil, AZPTETimerFrame, "UIPanelCloseButton")
-    AZPTETimerFrameCloseButton:SetWidth(25)
-    AZPTETimerFrameCloseButton:SetHeight(25)
-    AZPTETimerFrameCloseButton:SetPoint("TOPRIGHT", AZPTETimerFrame, "TOPRIGHT", 2, 2)
-    AZPTETimerFrameCloseButton:SetScript("OnClick", function() AZPTETimerFrame:Hide() end)
+    InputFrame.CloseButton = CreateFrame("Button", nil, InputFrame, "UIPanelCloseButton")
+    InputFrame.CloseButton:SetWidth(25)
+    InputFrame.CloseButton:SetHeight(25)
+    InputFrame.CloseButton:SetPoint("TOPRIGHT", InputFrame, "TOPRIGHT", 2, 2)
+    InputFrame.CloseButton:SetScript("OnClick", function() InputFrame:Hide() end)
 
-    AZPTETimerFrame.Plan = {}
-    AZPTETimerFrame.HPActual = {}
-    AZPTETimerFrame.CurrentTimer = {}
-    AZPTETimerFrame.Difference = {}
-    AZPTETimerFrame.Plan.Header = AZPTETimerFrame:CreateFontString("AZPTETimerFrame", "ARTWORK", "GameFontNormalLarge")
-    AZPTETimerFrame.Plan.Header:SetSize(100, 20)
-    AZPTETimerFrame.Plan.Header:SetPoint("TOP", -125, -40)
-    AZPTETimerFrame.Plan.Header:SetJustifyH("RIGHT")
-    AZPTETimerFrame.Plan.Header:SetText("Plan")
-    AZPTETimerFrame.HPActual.Header = AZPTETimerFrame:CreateFontString("AZPTETimerFrame", "ARTWORK", "GameFontNormalLarge")
-    AZPTETimerFrame.HPActual.Header:SetSize(100, 20)
-    AZPTETimerFrame.HPActual.Header:SetPoint("TOP", -25, -40)
-    AZPTETimerFrame.HPActual.Header:SetText("HP%")
-    AZPTETimerFrame.CurrentTimer.Header = AZPTETimerFrame:CreateFontString("AZPTETimerFrame", "ARTWORK", "GameFontNormalLarge")
-    AZPTETimerFrame.CurrentTimer.Header:SetSize(100, 20)
-    AZPTETimerFrame.CurrentTimer.Header:SetPoint("TOP", 50, -40)
-    AZPTETimerFrame.CurrentTimer.Header:SetText("Timer")
-    AZPTETimerFrame.Difference.Header = AZPTETimerFrame:CreateFontString("AZPTETimerFrame", "ARTWORK", "GameFontNormalLarge")
-    AZPTETimerFrame.Difference.Header:SetSize(100, 20)
-    AZPTETimerFrame.Difference.Header:SetPoint("TOP", 125, -40)
-    AZPTETimerFrame.Difference.Header:SetText("Difference")
+    InputFrame.Plan = {}
+    InputFrame.HPActual = {}
+    InputFrame.CurrentTimer = {}
+    InputFrame.Difference = {}
+    InputFrame.Plan.Header = InputFrame:CreateFontString("InputFrame", "ARTWORK", "GameFontNormalLarge")
+    InputFrame.Plan.Header:SetSize(100, 20)
+    InputFrame.Plan.Header:SetPoint("TOP", -125, -40)
+    InputFrame.Plan.Header:SetJustifyH("RIGHT")
+    InputFrame.Plan.Header:SetText("Plan")
+    InputFrame.HPActual.Header = InputFrame:CreateFontString("InputFrame", "ARTWORK", "GameFontNormalLarge")
+    InputFrame.HPActual.Header:SetSize(100, 20)
+    InputFrame.HPActual.Header:SetPoint("TOP", -25, -40)
+    InputFrame.HPActual.Header:SetText("HP%")
+    InputFrame.CurrentTimer.Header = InputFrame:CreateFontString("InputFrame", "ARTWORK", "GameFontNormalLarge")
+    InputFrame.CurrentTimer.Header:SetSize(100, 20)
+    InputFrame.CurrentTimer.Header:SetPoint("TOP", 50, -40)
+    InputFrame.CurrentTimer.Header:SetText("Timer")
+    InputFrame.Difference.Header = InputFrame:CreateFontString("InputFrame", "ARTWORK", "GameFontNormalLarge")
+    InputFrame.Difference.Header:SetSize(100, 20)
+    InputFrame.Difference.Header:SetPoint("TOP", 125, -40)
+    InputFrame.Difference.Header:SetText("Difference")
     for i = 1, #EncounterTrackingData do
-        AZPTETimerFrame.Plan[i] = AZPTETimerFrame:CreateFontString("AZPTETimerFrame", "ARTWORK", "GameFontNormalLarge")
-        AZPTETimerFrame.Plan[i]:SetSize(100, 20)
-        AZPTETimerFrame.Plan[i]:SetPoint("TOP", -125, -20 * i - 40)
-        AZPTETimerFrame.Plan[i]:SetJustifyH("RIGHT")
+        InputFrame.Plan[i] = InputFrame:CreateFontString("InputFrame", "ARTWORK", "GameFontNormalLarge")
+        InputFrame.Plan[i]:SetSize(100, 20)
+        InputFrame.Plan[i]:SetPoint("TOP", -125, -20 * i - 40)
+        InputFrame.Plan[i]:SetJustifyH("RIGHT")
         if AZPTESavedList[i][1] ~= nil and AZPTESavedList[i][2] ~= nil then
-            AZPTETimerFrame.Plan[i]:SetText(AZPTESavedList[i][2] .. "% at " .. AZPTESavedList[i][1] .. "s")
+            InputFrame.Plan[i]:SetText(AZPTESavedList[i][2] .. "% at " .. AZPTESavedList[i][1] .. "s")
         end
-        AZPTETimerFrame.HPActual[i] = AZPTETimerFrame:CreateFontString("AZPTETimerFrame", "ARTWORK", "GameFontNormalLarge")
-        AZPTETimerFrame.HPActual[i]:SetSize(50, 20)
-        AZPTETimerFrame.HPActual[i]:SetPoint("TOP", -25, -20 * i - 40)
-        AZPTETimerFrame.CurrentTimer[i] = AZPTETimerFrame:CreateFontString("AZPTETimerFrame", "ARTWORK", "GameFontNormalLarge")
-        AZPTETimerFrame.CurrentTimer[i]:SetSize(50, 20)
-        AZPTETimerFrame.CurrentTimer[i]:SetPoint("TOP", 50, -20 * i - 40)
-        AZPTETimerFrame.Difference[i] = AZPTETimerFrame:CreateFontString("AZPTETimerFrame", "ARTWORK", "GameFontNormalLarge")
-        AZPTETimerFrame.Difference[i]:SetSize(50, 20)
-        AZPTETimerFrame.Difference[i]:SetPoint("TOP", 125, -20 * i - 40)
+        InputFrame.HPActual[i] = InputFrame:CreateFontString("InputFrame", "ARTWORK", "GameFontNormalLarge")
+        InputFrame.HPActual[i]:SetSize(50, 20)
+        InputFrame.HPActual[i]:SetPoint("TOP", -25, -20 * i - 40)
+        InputFrame.CurrentTimer[i] = InputFrame:CreateFontString("InputFrame", "ARTWORK", "GameFontNormalLarge")
+        InputFrame.CurrentTimer[i]:SetSize(50, 20)
+        InputFrame.CurrentTimer[i]:SetPoint("TOP", 50, -20 * i - 40)
+        InputFrame.Difference[i] = InputFrame:CreateFontString("InputFrame", "ARTWORK", "GameFontNormalLarge")
+        InputFrame.Difference[i]:SetSize(50, 20)
+        InputFrame.Difference[i]:SetPoint("TOP", 125, -20 * i - 40)
     end
 
-    --AZPTETimerFrame:Hide()
+    AZPTETimerFrame = AZP.Core.AddOns.TE.MainFrame
 
-    tempFrame = CreateFrame("FRAME", nil, UIParent, "BackdropTemplate")
-    tempFrame:SetSize(100, 50)
-    tempFrame:SetPoint("CENTER", -750, -200)
-    tempFrame:EnableMouse(true)
-    tempFrame:SetMovable(true)
-    tempFrame:RegisterForDrag("LeftButton")
-    tempFrame:SetScript("OnDragStart", tempFrame.StartMoving)
-    tempFrame:SetScript("OnDragStop", tempFrame.StopMovingOrSizing)
-    tempFrame:SetScript("OnEvent", AZP.TimedEncounters.OnEvent)
-    tempFrame:SetBackdrop({
-        bgFile = "Interface/Tooltips/UI-Tooltip-Background",
-        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-        edgeSize = 12,
-        insets = { left = 1, right = 1, top = 1, bottom = 1 },
-    })
-    tempFrame:SetBackdropColor(0.25, 0.25, 0.25, 0.80)
-
-    local tempButton = CreateFrame("Button", nil, tempFrame, "UIPanelButtonTemplate")
-    tempButton:SetPoint("CENTER", 0, 0)
-    tempButton:SetSize(75, 25)
-    tempButton:SetScript("OnClick", function()
-        if AZPTETimerFrame:IsShown() then
-            AZPTETimerFrame:Hide()
-            tempButton.text:SetText("ShowFrame")
-        else
-            AZPTETimerFrame:Show()
-            tempButton.text:SetText("HideFrame")
-        end
-    end)
-    tempButton.text = tempButton:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    tempButton.text:SetText("ShowFrame")
-    tempButton.text:SetSize(75, 25)
-    tempButton.text:SetPoint("CENTER", 0, 0)
+    VarsAndAddOnLoaded[2] = true
+    AZP.TimedEncounters:VarsAndAddOnLoaded()
 end
 
 function AZP.TimedEncounters:PullNumbersFromEditBox(index)
@@ -638,7 +620,3 @@ SlashCmdList['TE'] =
             AZPTETimerFrame:Show()
         end
     end
-
-
-
-    -- Reset Bar on EncounterStart!
