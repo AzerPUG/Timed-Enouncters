@@ -4,7 +4,7 @@ if AZP.VersionControl == nil then AZP.VersionControl = {} end
 if AZP.OnLoad == nil then AZP.OnLoad = {} end
 if AZP.OnEvent == nil then AZP.OnEvent = {} end
 
-AZP.VersionControl["Timed Encounters"] = 10
+AZP.VersionControl["Timed Encounters"] = 11
 if AZP.TimedEncounters == nil then AZP.TimedEncounters = {} end
 if AZP.TimedEncounters.Events == nil then AZP.TimedEncounters.Events = {} end
 
@@ -345,7 +345,7 @@ end
 function AZP.TimedEncounters.Events:EncounterEnd()
     EncounterTimer:Cancel()
     AZPTECombatBar:Hide()
-    AZP.TimedEncounters:SendToRaidChat()
+    --AZP.TimedEncounters:SendToRaidChat()
     AZPTETimerFrame:Show()
 
     -- Reset AddOn to start.
@@ -358,7 +358,7 @@ function AZP.TimedEncounters:SendToRaidChat()
         if EncounterTrackingData[i] ~= nil then
             local raidMessage = "Boss was at " .. EncounterTrackingData[i][2] .. "% at " .. AZPTESavedList[i][1] .. " seconds into the fight!"
             --SendChatMessage(raidMessage, "RAID")
-            SendChatMessage(raidMessage, "WHISPER", nil, "Tex-Ravencrest")
+            --SendChatMessage(raidMessage, "WHISPER", nil, "Tex-Ravencrest")
         end
     end
 end
