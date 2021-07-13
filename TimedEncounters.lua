@@ -345,20 +345,17 @@ end
 function AZP.TimedEncounters.Events:EncounterEnd()
     EncounterTimer:Cancel()
     AZPTECombatBar:Hide()
-    --AZP.TimedEncounters:SendToRaidChat()
+    AZP.TimedEncounters:SendToRaidChat()
     AZPTETimerFrame:Show()
-
-    -- Reset AddOn to start.
 end
 
-function AZP.TimedEncounters:SendToRaidChat()
+function AZP.TimedEncounters:SendToRaidChat() -- AZPTESavedList
     --SendChatMessage("AzerPUG's Timed Encounters Post-Combat Data:", "RAID")
     --SendChatMessage("AzerPUG's Timed Encounters Post-Combat Data:", "WHISPER", nil, "Tex-Ravencrest")
     for i = 1, 10 do
-        if EncounterTrackingData[i] ~= nil then
+        if EncounterTrackingData[i][1] ~= nil and EncounterTrackingData[i][2] ~= nil then
             local raidMessage = "Boss was at " .. EncounterTrackingData[i][2] .. "% at " .. AZPTESavedList[i][1] .. " seconds into the fight!"
-            --SendChatMessage(raidMessage, "RAID")
-            --SendChatMessage(raidMessage, "WHISPER", nil, "Tex-Ravencrest")
+                -- <3 <3 <3     Make it actually say something, test in whisper?
         end
     end
 end
