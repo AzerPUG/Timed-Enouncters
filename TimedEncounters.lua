@@ -352,9 +352,13 @@ end
 function AZP.TimedEncounters:SendToRaidChat() -- AZPTESavedList
     --SendChatMessage("AzerPUG's Timed Encounters Post-Combat Data:", "RAID")
     --SendChatMessage("AzerPUG's Timed Encounters Post-Combat Data:", "WHISPER", nil, "Tex-Ravencrest")
+    if EncounterTrackingData[1][1] ~= nil and EncounterTrackingData[1][1] ~= "0" then
+        print("AzerPUG's Timed Encounters Post-Combat Data:")
+    end
     for i = 1, 10 do
-        if EncounterTrackingData[i][1] ~= nil and EncounterTrackingData[i][2] ~= nil then
+        if EncounterTrackingData[i][1] ~= nil and EncounterTrackingData[i][1] ~= "0" and EncounterTrackingData[i][2] ~= nil and EncounterTrackingData[i][2] ~= "0" then
             local raidMessage = "Boss was at " .. EncounterTrackingData[i][2] .. "% at " .. AZPTESavedList[i][1] .. " seconds into the fight!"
+            print(raidMessage)
                 -- <3 <3 <3     Make it actually say something, test in whisper?
         end
     end
