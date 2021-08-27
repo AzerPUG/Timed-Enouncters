@@ -219,6 +219,7 @@ function AZP.TimedEncounters:FillOptionsPanel(frameToFill)
     AZPTEScaleSlider:SetValueStep(0.1)
 
     AZPTEScaleSlider:SetScript("OnValueChanged", AZP.TimedEncounters.setScale)
+
     frameToFill.BarStyleDropDown = CreateFrame("Button", nil, frameToFill, "UIDropDownMenuTemplate")
     frameToFill.BarStyleDropDown:SetPoint("TOPLEFT", 350, -150)
     frameToFill.FontStyleDropDown = CreateFrame("Button", nil, frameToFill, "UIDropDownMenuTemplate")
