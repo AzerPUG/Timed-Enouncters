@@ -4,13 +4,13 @@ if AZP.VersionControl == nil then AZP.VersionControl = {} end
 if AZP.OnLoad == nil then AZP.OnLoad = {} end
 if AZP.OnEvent == nil then AZP.OnEvent = {} end
 
-AZP.VersionControl["Timed Encounters"] = 12
+AZP.VersionControl["Timed Encounters"] = 13
 if AZP.TimedEncounters == nil then AZP.TimedEncounters = {} end
 if AZP.TimedEncounters.Events == nil then AZP.TimedEncounters.Events = {} end
 
 local AZPTETimerFrame, AZPTECombatBar, UpdateFrame, EventFrame = nil, nil, nil, nil
 local BossHPBar = nil
-local AZPTimedEncountersOptionsPanel
+local AZPTEOptions
 local HaveShowedUpdateNotification = false
 local EncounterTrackingData = {}
 local EcounterTrackingEditBoxes = {}
@@ -34,7 +34,7 @@ function AZP.TimedEncounters:OnLoadCore()
 
     AZP.OptionsPanels:RemovePanel("Timed Encounters")
     AZP.OptionsPanels:Generic("Timed Encounters", optionHeader, function(frame)
-        AZPTimedEncountersOptionsPanel = frame
+        AZPTEOptions = frame
         AZP.TimedEncounters:FillOptionsPanel(frame)
     end)
 
@@ -79,28 +79,28 @@ function AZP.TimedEncounters:OnLoadSelf()
 
     UpdateFrame:Hide()
 
-    AZPTimedEncountersOptionsPanel = CreateFrame("FRAME", nil)
-    AZPTimedEncountersOptionsPanel.name = "|c0000FFFFAzerPUG's Timed Encounters|r"
-    InterfaceOptions_AddCategory(AZPTimedEncountersOptionsPanel)
+    AZPTEOptions = CreateFrame("FRAME", nil)
+    AZPTEOptions.name = "|c0000FFFFAzerPUG's Timed Encounters|r"
+    InterfaceOptions_AddCategory(AZPTEOptions)
 
-    AZPTimedEncountersOptionsPanel.Header = AZPTimedEncountersOptionsPanel:CreateFontString(nil, "ARTWORK", "GameFontNormalHuge")
-    AZPTimedEncountersOptionsPanel.Header:SetText("|c0000FFFFAzerPUG's Timed Encounters Options|r")
-    AZPTimedEncountersOptionsPanel.Header:SetWidth(AZPTimedEncountersOptionsPanel:GetWidth())
-    AZPTimedEncountersOptionsPanel.Header:SetHeight(25)
-    AZPTimedEncountersOptionsPanel.Header:SetPoint("TOP", 0, -10)
+    AZPTEOptions.Header = AZPTEOptions:CreateFontString(nil, "ARTWORK", "GameFontNormalHuge")
+    AZPTEOptions.Header:SetText("|c0000FFFFAzerPUG's Timed Encounters Options|r")
+    AZPTEOptions.Header:SetWidth(AZPTEOptions:GetWidth())
+    AZPTEOptions.Header:SetHeight(25)
+    AZPTEOptions.Header:SetPoint("TOP", 0, -10)
 
-    AZPTimedEncountersOptionsPanel.Footer = AZPTimedEncountersOptionsPanel:CreateFontString("AZPTimedEncountersOptionsPanel", "ARTWORK", "GameFontNormalLarge")
-    AZPTimedEncountersOptionsPanel.Footer:SetPoint("TOP", 0, -400)
-    AZPTimedEncountersOptionsPanel.Footer:SetText(
+    AZPTEOptions.Footer = AZPTEOptions:CreateFontString("AZPTEOptions", "ARTWORK", "GameFontNormalLarge")
+    AZPTEOptions.Footer:SetPoint("TOP", 0, -400)
+    AZPTEOptions.Footer:SetText(
         "|cFF00FFFFAzerPUG Links:\n" ..
         "Website: www.azerpug.com\n" ..
         "Discord: www.azerpug.com/discord\n" ..
         "Twitch: www.twitch.tv/azerpug\n|r"
     )
 
-    AZPTimedEncountersOptionsPanel:Hide()
+    AZPTEOptions:Hide()
 
-    AZP.TimedEncounters:FillOptionsPanel(AZPTimedEncountersOptionsPanel)
+    AZP.TimedEncounters:FillOptionsPanel(AZPTEOptions)
 
     AZPTETimerFrame = CreateFrame("FRAME", nil, UIParent, "BackdropTemplate")
     AZPTETimerFrame:SetSize(350, 275)
@@ -251,6 +251,27 @@ function AZP.TimedEncounters:FillOptionsPanel(frameToFill)
             UIDropDownMenu_AddButton(info, 1)
         end
     end)
+
+    frameToFill.minPercentage = CreateFrame("EditBox", nil, frameToFill, "InputBoxTemplate")
+    frameToFill.minPercentage:SetSize(50, 25)
+    frameToFill.minPercentage:SetPoint("TOP", AZPTEScaleSlider, "BOTTOM", 0, -25)
+    frameToFill.minPercentage:SetScript("OnEditFocusLost", function() AZP.TimedEncounters:SetMinMax() end)
+
+    frameToFill.maxPercentage = CreateFrame("EditBox", nil, frameToFill, "InputBoxTemplate")
+    frameToFill.maxPercentage:SetSize(50, 25)
+    frameToFill.maxPercentage:SetPoint("TOP", frameToFill.minPercentage, "BOTTOM", 0, -25)
+    frameToFill.maxPercentage:SetScript("OnEditFocusLost", function() AZP.TimedEncounters:SetMinMax() end)
+end
+
+function AZP.TimedEncounters:SetMinMax()
+    local minVal, maxVal = nil, nil
+    minVal = tonumber(AZPTEOptions.minPercentage:GetText())
+    maxVal = tonumber(AZPTEOptions.maxPercentage:GetText())
+
+    if minVal == nil then minVal = 0 end
+    if maxVal == nil then maxVal = 100 end
+
+    BossHPBar:SetMinMaxValues(minVal * 100, maxVal * 100)
 end
 
 function AZP.TimedEncounters:SetValue(var, newValue)
@@ -261,7 +282,7 @@ function AZP.TimedEncounters:SetValue(var, newValue)
         StyleVars.font = newValue
         AZPTEConfig.font = newValue
         fontStyleName = string.match(StylePath, "\\(.*)")
-        UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.FontStyleDropDown, fontStyleName)
+        UIDropDownMenu_SetText(AZPTEOptions.FontStyleDropDown, fontStyleName)
         AZP.TimedEncounters:ChangeTimerFrameFonts(AZPTETimerFrame)
     elseif var == "size" then
         StyleVars.size = newValue
@@ -273,7 +294,7 @@ function AZP.TimedEncounters:SetValue(var, newValue)
         StyleVars.bar = newValue
         AZPTEConfig.bar = newValue
         barStyleName = string.match(StylePath, ".*\\(.*)")
-        UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.BarStyleDropDown, barStyleName)
+        UIDropDownMenu_SetText(AZPTEOptions.BarStyleDropDown, barStyleName)
     end
     BossHPBar:SetStatusBarTexture(StyleVars.bar)
     BossHPBar.bg:SetTexture(StyleVars.bar)
@@ -331,8 +352,8 @@ function AZP.TimedEncounters:setScale(scale)
 end
 
 function AZP.TimedEncounters:LoadStyle()
-    UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.FontStyleDropDown, string.match(AZPTEConfig.font, "\\(.*)"))
-    UIDropDownMenu_SetText(AZPTimedEncountersOptionsPanel.BarStyleDropDown, string.match(AZPTEConfig.bar, ".*\\(.*)"))
+    UIDropDownMenu_SetText(AZPTEOptions.FontStyleDropDown, string.match(AZPTEConfig.font, "\\(.*)"))
+    UIDropDownMenu_SetText(AZPTEOptions.BarStyleDropDown, string.match(AZPTEConfig.bar, ".*\\(.*)"))
 
     AZP.TimedEncounters.StyleVars.bar = AZPTEConfig.bar
     AZP.TimedEncounters.StyleVars.font = AZPTEConfig.font
