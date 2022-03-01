@@ -4,7 +4,7 @@ if AZP.VersionControl == nil then AZP.VersionControl = {} end
 if AZP.OnLoad == nil then AZP.OnLoad = {} end
 if AZP.OnEvent == nil then AZP.OnEvent = {} end
 
-AZP.VersionControl["Timed Encounters"] = 13
+AZP.VersionControl["Timed Encounters"] = 14
 if AZP.TimedEncounters == nil then AZP.TimedEncounters = {} end
 if AZP.TimedEncounters.Events == nil then AZP.TimedEncounters.Events = {} end
 
