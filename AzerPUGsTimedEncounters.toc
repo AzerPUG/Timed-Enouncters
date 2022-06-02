@@ -1,9 +1,9 @@
-## Interface: 90200
+## Interface: 90205
 ## Title: |cFF00FFFFAzerPUG's|r |cFFFF00FFTimedEncounters|r
 ## Author: Tex & AzerPUG Gaming Community (www.azerpug.com/discord)
 ## OptionalDeps: AzerPUG's Core
 ## Notes: TimedEncounters makes you able to set timers/health% and check during the fight if you make those checkpoints.
-## Version: SL 9.1 (For actual addon version, check TimedEncounters.lua)
+## Version: SL 9.2.5 (For actual addon version, check TimedEncounters.lua)
 ## SavedVariables: AZPTESavedList TEFrameLocation TECombatFrameLocation AZPTEConfig
 
 dataTables.lua
